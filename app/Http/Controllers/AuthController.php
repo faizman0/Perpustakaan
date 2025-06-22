@@ -18,12 +18,12 @@ class AuthController extends Controller
     {
         // Validasi input
         $request->validate([
-            'email' => 'required|email',
+            'username' => 'required',
             'password' => 'required',
         ]);
 
         // Coba melakukan login
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+        if (Auth::attempt(['username' => $request->username, 'password' => $request->password])) {
             // Jika berhasil, regenerate session dan redirect ke halaman yang dimaksud
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');
@@ -31,7 +31,7 @@ class AuthController extends Controller
 
         // Jika gagal, kembali ke halaman login dengan pesan error
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
+            'username' => 'Username atau password salah.',
         ]);
     }
 
