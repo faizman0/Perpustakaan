@@ -4,29 +4,54 @@
 
 @section('content')
     <div class="container-fluid">
+        @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        @endif
+        @if(session('warning'))
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> {{ session('warning') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        @endif
+        @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-times-circle"></i> {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        @endif
+        <div class="row mb-3">
+            <div class="col-12">
+                @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('create-buku'))
+                <a href="{{ route('admin.buku.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Tambah Buku
+                </a>
+                @endif
+                @if(auth()->user()->hasRole('admin'))
+                <a href="{{ route('admin.buku.export.excel') }}" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </a>
+                <a href="{{ route('admin.buku.export.pdf') }}" class="btn btn-danger">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </a>
+                <button type="button" class="btn btn-info" data-toggle="modal" data-target="#importModal">
+                    <i class="fas fa-file-import"></i> Import
+                </button>
+                @endif
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Data Buku</h3>
-                <div class="card-tools">
-                    <div class="btn-group">
-                        @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('create-buku'))
-                        <a href="{{ route('admin.buku.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus"></i> Tambah Buku
-                        </a>
-                        @endif
-                        @if(auth()->user()->hasRole('admin'))
-                        <a href="{{ route('admin.buku.export.excel') }}" class="btn btn-success btn-sm ms-2">
-                            <i class="fas fa-file-excel"></i> Export Excel
-                        </a>
-                        <a href="{{ route('admin.buku.export.pdf') }}" class="btn btn-danger btn-sm ms-2">
-                            <i class="fas fa-file-pdf"></i> Export PDF
-                        </a>
-                        <button type="button" class="btn btn-info btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#importModal">
-                            <i class="fas fa-file-import"></i> Import
-                        </button>
-                        @endif
-                    </div>
-                </div>
             </div>
             <!-- /.card-header -->
 
@@ -36,15 +61,15 @@
                         <thead>
                             <tr>
                                 <th width="5%">No</th>
-                                <th>Kode Buku</th>
-                                <th>Judul</th>
                                 <th>Kategori</th>
+                                <th>No. Inventaris</th>
+                                <th>Judul</th>
                                 <th>Pengarang</th>
                                 <th>Penerbit</th>
                                 <th>Tahun Terbit</th>
-                                <th>Stok</th>
-                                @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('edit-buku') || auth()->user()->hasPermission('delete-buku'))
-                                <th width="15%">Aksi</th>
+                                <th>Jumlah</th>
+                                @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('petugas') || auth()->user()->hasPermission('edit-buku') || auth()->user()->hasPermission('delete-buku'))
+                                <th width="20%" class="text-center">Aksi</th>
                                 @endif
                             </tr>
                         </thead>
@@ -52,28 +77,31 @@
                             @foreach ($bukus as $buku)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $buku->kode_buku }}</td>
-                                    <td>{{ $buku->judul }}</td>
                                     <td>{{ $buku->kategori->nama }}</td>
+                                    <td>{{ $buku->no_inventaris }}</td>
+                                    <td>{{ $buku->judul }}</td>
                                     <td>{{ $buku->pengarang }}</td>
                                     <td>{{ $buku->penerbit }}</td>
                                     <td>{{ $buku->tahun_terbit }}</td>
-                                    <td>{{ $buku->stok }}</td>
+                                    <td>{{ $buku->jumlah }}</td>
                                     
-                                    @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('edit-buku') || auth()->user()->hasPermission('delete-buku'))
-                                    <td>
+                                    @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('petugas') || auth()->user()->hasPermission('edit-buku') || auth()->user()->hasPermission('delete-buku'))
+                                    <td class="text-center">
                                         <div class="btn-group">
+                                            <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#detailModal{{ $buku->id }}">
+                                                <i class="fas fa-eye"></i> Detail
+                                            </button>
                                             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('edit-buku'))
                                             <a href="{{ route('admin.buku.edit', $buku->id) }}" class="btn btn-warning btn-sm">
-                                                <i class="fas fa-edit"></i>
+                                                <i class="fas fa-edit"></i> Edit
                                             </a>
                                             @endif
                                             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('delete-buku'))
-                                            <form action="{{ route('admin.buku.destroy', $buku->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.buku.destroy', $buku->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data buku ini?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus buku ini?')">
-                                                    <i class="fas fa-trash"></i>
+                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-trash"></i> Hapus
                                                 </button>
                                             </form>
                                             @endif
@@ -85,7 +113,6 @@
                         </tbody>
                     </table>
                 </div>
-
             </div>
             <!-- /.card-body -->
         </div>
@@ -99,7 +126,9 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="detailModalLabel{{ $buku->id }}">Detail Buku</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <table class="table table-bordered">
@@ -155,27 +184,29 @@
                     </table>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
     </div>
     @endforeach
 
-    <!-- Modal Import -->
+    <!-- Import Modal -->
     @if(auth()->user()->hasRole('admin'))
     <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import Data Buku</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
                 <form action="{{ route('admin.buku.import.excel') }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="importModalLabel">Import Data Buku</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
                     <div class="modal-body">
+                        <div class="alert alert-info">
+                        <div class="modal-body">
                     @if(session('import_errors'))
                         <div class="alert alert-danger alert-dismissible">
                             <button type="button" class="close" data-dismiss="alert">×</button>
@@ -200,31 +231,40 @@
                             {{ session('error') }}
                         </div>
                     @endif
-                        <div class="form-group">
-                            <label for="importFile">Pilih File Excel</label>
-                            <div class="input-group">
-                                <div class="custom-file">
-                                    <input type="file" class="custom-file-input" id="importFile" name="file" required accept=".xlsx,.xls">
-                                    <label class="custom-file-label" for="importFile">Pilih file</label>
-                                </div>
-                            </div>
-                            <small class="text-muted">Format file harus .xlsx atau .xls (Maks. 2MB)</small>
+                            <h5><i class="fas fa-info-circle"></i> Petunjuk Import Data Buku:</h5>
+                            <ol class="mb-0">
+                                <li>Download template Excel yang telah disediakan</li>
+                                <li>Isi data sesuai dengan format yang ada di template</li>
+                                <li>Pastikan kolom(Kategori, Judul, No. Inventaris, No. Klasifikasi, Pengarang, Penerbit, Tahun Terbit, ISBN, dan Jumlah Buku) wajib terisi</li>
+                                <li>Upload file Excel yang telah diisi</li>
+                            </ol>
                         </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="importFile" class="form-label">Pilih File Excel</label>
+                            <input type="file" class="form-control" id="importFile" name="file" required accept=".xlsx,.xls">
+                            <div class="form-text">Format file harus .xlsx atau .xls (Maks. 2MB)</div>
+                        </div>
+
                         <div class="mt-3">
                             <a href="{{ route('admin.buku.template.download') }}" class="btn btn-outline-success btn-sm">
                                 <i class="fas fa-download"></i> Download Template
                             </a>
                         </div>
-                    </div>
+                    </div>      
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">Import Data</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Import Data
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
     @endif
+    
+
 
     <!-- Form Hapus tersembunyi -->
     <form id="deleteForm" method="POST" style="display: none;">
@@ -245,19 +285,10 @@
             }
         });
 
-        // File input name display
-        $('.custom-file-input').on('change', function() {
-            let fileName = $(this).val().split('\\').pop();
-            $(this).next('.custom-file-label').addClass("selected").html(fileName);
-        });
-
-        // Delete button handler
-        $('.delete-btn').click(function() {
-            let bukuId = $(this).data('id');
-            if (confirm('Apakah Anda yakin ingin menghapus buku ini?')) {
-                $('#deleteForm').attr('action', '/buku/' + bukuId).submit();
-            }
-        });
+        // Auto close alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
     });
 </script>
 @endpush

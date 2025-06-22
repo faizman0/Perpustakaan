@@ -44,65 +44,41 @@
     </div>
 
     <div class="section">
-        <h3>Peminjaman Siswa</h3>
+        <h3>Daftar Peminjaman</h3>
         <table>
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>NIS</th>
-                    <th>Nama Siswa</th>
-                    <th>Kelas</th>
+                    <th>Kode Anggota</th>
+                    <th>Nama</th>
+                    <th>Tipe</th>
+                    <th>NIS/NIP</th>
                     <th>Judul Buku</th>
                     <th>Kategori</th>
                     <th>Tanggal Pinjam</th>
-                    <th>Tanggal Kembali</th>
+                    <th>Tanggal Pengembalian</th>
                     <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($peminjamanSiswa as $index => $peminjaman)
+                @foreach($peminjamans as $index => $peminjaman)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $peminjaman->siswa->nis }}</td>
-                    <td>{{ $peminjaman->siswa->nama }}</td>
-                    <td>{{ $peminjaman->siswa->kelas->nama_kelas }}</td>
+                    <td>{{ $peminjaman->anggota->kode_anggota }}</td>
+                    <td>{{ $peminjaman->anggota->nama }}</td>
+                    <td>{{ $peminjaman->anggota->tipe }}</td>
+                    <td>
+                        @if($peminjaman->anggota->siswa)
+                            {{ $peminjaman->anggota->siswa->nis }}
+                        @elseif($peminjaman->anggota->guru)
+                            {{ $peminjaman->anggota->guru->nip }}
+                        @endif
+                    </td>
                     <td>{{ $peminjaman->buku->judul }}</td>
                     <td>{{ $peminjaman->buku->kategori->nama }}</td>
-                    <td>{{ \Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->format('d M Y') }}</td>
-                    <td>{{ $peminjaman->tanggal_kembali ? \Carbon\Carbon::parse($peminjaman->tanggal_kembali)->format('d M Y') : '-' }}</td>
-                    <td>{{ $peminjaman->tanggal_kembali ? 'Dikembalikan' : 'Dipinjam' }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    <div class="section">
-        <h3>Peminjaman Guru</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>NIP</th>
-                    <th>Nama Guru</th>
-                    <th>Judul Buku</th>
-                    <th>Kategori</th>
-                    <th>Tanggal Pinjam</th>
-                    <th>Tanggal Kembali</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($peminjamanGuru as $index => $peminjaman)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $peminjaman->guru->nip }}</td>
-                    <td>{{ $peminjaman->guru->nama }}</td>
-                    <td>{{ $peminjaman->buku->judul }}</td>
-                    <td>{{ $peminjaman->buku->kategori->nama }}</td>
-                    <td>{{ \Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->format('d M Y') }}</td>
-                    <td>{{ $peminjaman->tanggal_kembali ? \Carbon\Carbon::parse($peminjaman->tanggal_kembali)->format('d M Y') : '-' }}</td>
-                    <td>{{ $peminjaman->tanggal_kembali ? 'Dikembalikan' : 'Dipinjam' }}</td>
+                    <td>{{ \Carbon\Carbon::parse($peminjaman->tanggal_peminjaman)->format('d M Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($peminjaman->tanggal_pengembalian)->format('d M Y') }}</td>
+                    <td>{{ $peminjaman->pengembalian ? 'Dikembalikan' : 'Dipinjam' }}</td>
                 </tr>
                 @endforeach
             </tbody>

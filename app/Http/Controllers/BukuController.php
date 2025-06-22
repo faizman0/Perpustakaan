@@ -35,16 +35,31 @@ class BukuController extends Controller
         $request->validate([
             'judul' => 'required',
             'no_inventaris' => 'required|string|unique:bukus',
-            'no_klasifikasi' => 'required|string|unique:bukus',
+            'no_klasifikasi' => 'nullable|string|',
             'pengarang' => 'required',
             'penerbit' => 'required',
-            'tahun_terbit' => 'required|integer|min:1900',
+            'tahun_terbit' => 'required|integer|digits:4|min:1900|max:'.date('Y'),
             'edisi' => 'nullable|string',
             'isbn' => 'nullable|string|unique:bukus',
             'kolase' => 'nullable|string',
             'jumlah' => 'required|integer|min:0',
             'keterangan' => 'nullable|string',
             'kategori_id' => 'required|exists:kategoris,id',
+        ], [
+            'judul.required' => 'Judul buku wajib diisi',
+            'no_inventaris.required' => 'Nomor inventaris wajib diisi',
+            'no_inventaris.unique' => 'Nomor inventaris sudah ada',
+            'pengarang.required' => 'Pengarang wajib diisi',
+            'penerbit.required' => 'Penerbit wajib diisi',
+            'tahun_terbit.required' => 'Tahun terbit wajib diisi',
+            'tahun_terbit.integer' => 'Tahun terbit harus berupa angka',
+            'tahun_terbit.max' => 'Tahun terbit tidak boleh melebihi tahun sekarang',
+            'isbn.unique' => 'ISBN sudah ada',
+            'jumlah.required' => 'Jumlah buku wajib diisi',
+            'jumlah.integer' => 'Jumlah buku harus berupa angka',
+            'jumlah.min' => 'Jumlah buku minimal 0',
+            'kategori_id.required' => 'Kategori wajib dipilih',
+            'kategori_id.exists' => 'Kategori yang dipilih tidak valid'
         ]);
 
         Buku::create($request->all());
@@ -66,20 +81,37 @@ class BukuController extends Controller
         $request->validate([
             'judul' => 'required',
             'no_inventaris' => 'required|string|unique:bukus,no_inventaris,' . $buku->id,
-            'no_klasifikasi' => 'required|string|unique:bukus,no_klasifikasi,' . $buku->id,
+            'no_klasifikasi' => 'required|string',
             'pengarang' => 'required',
             'penerbit' => 'required',
-            'tahun_terbit' => 'required|integer|min:1900',
+            'tahun_terbit' => 'required|integer|digits:4|min:1900|max:'.date('Y'),
             'edisi' => 'nullable|string',
             'isbn' => 'nullable|string|unique:bukus,isbn,' . $buku->id,
             'kolase' => 'nullable|string',
             'jumlah' => 'required|integer|min:0',
             'keterangan' => 'nullable|string',
             'kategori_id' => 'required|exists:kategoris,id',
+        ], [
+            'judul.required' => 'Judul buku wajib diisi',
+            'no_inventaris.required' => 'Nomor inventaris wajib diisi',
+            'no_inventaris.unique' => 'Nomor inventaris sudah ada',
+            'pengarang.required' => 'Pengarang wajib diisi',
+            'penerbit.required' => 'Penerbit wajib diisi',
+            'tahun_terbit.required' => 'Tahun terbit wajib diisi',
+            'tahun_terbit.integer' => 'Tahun terbit harus berupa angka',
+            'tahun_terbit.digits' => 'Tahun terbit harus 4 digit',
+            'tahun_terbit.min' => 'Tahun terbit minimal tahun 1900',
+            'tahun_terbit.max' => 'Tahun terbit tidak boleh melebihi tahun sekarang',
+            'isbn.unique' => 'ISBN sudah ada',
+            'jumlah.required' => 'Jumlah buku wajib diisi',
+            'jumlah.integer' => 'Jumlah buku harus berupa angka',
+            'jumlah.min' => 'Jumlah buku minimal 0',
+            'kategori_id.required' => 'Kategori wajib dipilih',
+            'kategori_id.exists' => 'Kategori yang dipilih tidak valid'
         ]);
 
         $buku->update($request->all());
-        return redirect()->route('admin.buku.index')->with('success', 'Buku berhasil diperbarui.');
+        return redirect()->route('admin.buku.index')->with('success', 'Buku berhasil diedit.');
     }
 
     public function destroy(Buku $buku)

@@ -51,7 +51,11 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = Role::all();
-        return view('users.edit', compact('user', 'roles'));
+        return view('users.edit', [
+            'user' => $user,
+            'roles' => $roles,
+            'key' => 'user'
+        ]);
     }
 
     public function update(Request $request, User $user)
@@ -98,21 +102,35 @@ class UserController extends Controller
 
     public function editPassword()
     {
-        return view('users.edit-password');
+        return view('users.edit-password', [
+            'key' => 'user'
+        ]);
     }
 
     public function updatePassword(Request $request)
     {
         $request->validate([
-            'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', Password::min(8)
+                ->mixedCase()
+                ->numbers()],
+        ], [
+            'password.required' => 'Password baru harus diisi',
+            'password.confirmed' => 'Konfirmasi password tidak cocok',
+            'password.min' => 'Password minimal harus 8 karakter',
+            'password.mixed_case' => 'Password harus mengandung huruf besar dan huruf kecil',
+            'password.numbers' => 'Password harus mengandung angka',
         ]);
 
-        auth()->user()->update([
-            'password' => Hash::make($request->password)
-        ]);
+        try {
+            auth()->user()->update([
+                'password' => Hash::make($request->password)
+            ]);
 
-        return redirect()->back()
-            ->with('success', 'Password berhasil diperbarui.');
+            return redirect()->back()
+                ->with('success', 'Password berhasil diperbarui');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal memperbarui password. Silakan coba lagi');
+        }
     }
 } 

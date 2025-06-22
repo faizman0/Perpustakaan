@@ -58,6 +58,15 @@ class BukuImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
                 ['keterangan' => 'Imported from Excel']
             );
 
+            // Konversi no_klasifikasi ke string agar validasi tidak gagal jika Excel mengirim angka
+            if (isset($normalizedRow['no_klasifikasi'])) {
+                $normalizedRow['no_klasifikasi'] = (string)trim($normalizedRow['no_klasifikasi']);
+            }
+            // Konversi edisi ke string agar validasi tidak gagal jika Excel mengirim angka
+            if (isset($normalizedRow['edisi'])) {
+                $normalizedRow['edisi'] = (string)trim($normalizedRow['edisi']);
+            }
+
             // Validasi data wajib menggunakan normalized keys
             $requiredFields = ['judul', 'no_inventaris', 'no_klasifikasi', 'pengarang', 'penerbit', 'tahun_terbit', 'jumlah'];
             foreach ($requiredFields as $field) {
@@ -132,7 +141,7 @@ class BukuImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
             '*.kategori'       => 'required|string|max:100',
             '*.judul'          => 'required|max:255',
             '*.no_inventaris'  => 'required|unique:bukus,no_inventaris',
-            '*.no_klasifikasi' => 'required|unique:bukus,no_klasifikasi',
+            '*.no_klasifikasi' => 'nullable|string',
             '*.pengarang'      => 'required|max:100',
             '*.penerbit'       => 'required|max:100',
             '*.tahun_terbit'   => 'required|integer|min:1900|max:'.(date('Y')+1),
@@ -154,13 +163,9 @@ class BukuImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
             '*.judul.required' => 'Kolom judul wajib diisi',
             '*.no_inventaris.required' => 'Kolom nomor inventaris wajib diisi',
             '*.no_inventaris.unique' => 'Nomor inventaris sudah digunakan',
-            '*.no_klasifikasi.required' => 'Kolom nomor klasifikasi wajib diisi',
-            '*.no_klasifikasi.unique' => 'Nomor klasifikasi sudah digunakan',
             '*.pengarang.required' => 'Kolom pengarang wajib diisi',
             '*.penerbit.required' => 'Kolom penerbit wajib diisi',
             '*.tahun_terbit.required' => 'Kolom tahun terbit wajib diisi',
-            '*.tahun_terbit.integer' => 'Tahun terbit harus berupa angka',
-            '*.tahun_terbit.min' => 'Tahun terbit minimal 1900',
             '*.tahun_terbit.max' => 'Tahun terbit maksimal ' . (date('Y') + 1),
             '*.jumlah.required' => 'Kolom jumlah wajib diisi',
             '*.jumlah.integer' => 'Jumlah harus berupa angka',

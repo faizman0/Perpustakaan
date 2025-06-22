@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kunjungan;
-use App\Models\Siswa;
-use App\Models\Guru;
+use App\Models\Anggota;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\KunjunganExports;
@@ -24,30 +23,21 @@ class KunjunganController extends Controller
 
     public function index()
     {
-        $kunjunganSiswa = Kunjungan::with(['siswa.kelas'])
-            ->whereNotNull('siswa_id')
-            ->latest()
-            ->get();
-            
-        $kunjunganGuru = Kunjungan::with(['guru'])
-            ->whereNotNull('guru_id')
+        $kunjungans = Kunjungan::with(['anggota.siswa', 'anggota.guru'])
             ->latest()
             ->get();
             
         return view('kunjungan.index', [
-            'kunjunganSiswa' => $kunjunganSiswa,
-            'kunjunganGuru' => $kunjunganGuru,
+            'kunjungans' => $kunjungans,
             'key' => 'kunjungan'
         ]);
     }
 
     public function create()
     {
-        $siswas = Siswa::all();
-        $gurus = Guru::all();
+        $anggotas = Anggota::with(['siswa', 'guru'])->get();
         return view('kunjungan.create', [
-            'siswas' => $siswas,
-            'gurus' => $gurus,
+            'anggotas' => $anggotas,
             'key' => 'kunjungan'
         ]);
     }
@@ -55,27 +45,31 @@ class KunjunganController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'siswa_id' => 'nullable|exists:siswas,id',
-            'guru_id' => 'nullable|exists:gurus,id',
+            'anggota_ids' => 'required|array',
+            'anggota_ids.*' => 'exists:anggotas,id',
             'tanggal_kunjungan' => 'required|date',
-            'keterangan' => 'required'
+            'keterangan' => 'nullable|string',
         ]);
 
-        // Validasi bahwa salah satu dari siswa_id atau guru_id harus diisi
-        if (!$request->siswa_id && !$request->guru_id) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['siswa_id' => 'Pilih salah satu siswa atau guru']);
+        DB::beginTransaction();
+        try {
+            foreach ($request->anggota_ids as $anggota_id) {
+                Kunjungan::create([
+                    'anggota_id' => $anggota_id,
+                    'tanggal_kunjungan' => $request->tanggal_kunjungan,
+                    'keterangan' => $request->keterangan,
+                ]);
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating kunjungan: ' . $e->getMessage());
+            // Redirect based on role with error message
+            $route = Auth::user()->hasRole('admin') ? 'admin.kunjungan.index' : 'petugas.kunjungan.index';
+            return redirect()->route($route)
+                ->with('error', 'Terjadi kesalahan saat menyimpan data kunjungan.');
         }
 
-        // Validasi bahwa tidak boleh memilih keduanya
-        if ($request->siswa_id && $request->guru_id) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['siswa_id' => 'Hanya bisa memilih salah satu siswa atau guru']);
-        }
-
-        $kunjungan = Kunjungan::create($request->all());
 
         // Redirect berdasarkan role
         if (Auth::user()->hasRole('admin')) {
@@ -93,12 +87,10 @@ class KunjunganController extends Controller
             return redirect()->back()->with('error', 'Unauthorized access');
         }
 
-        $siswas = Siswa::all();
-        $gurus = Guru::all();
+        $anggotas = Anggota::with(['siswa', 'guru'])->get();
         return view('kunjungan.edit', [
             'kunjungan' => $kunjungan,
-            'siswas' => $siswas,
-            'gurus' => $gurus,
+            'anggotas' => $anggotas,
             'key' => 'kunjungan'
         ]);
     }
@@ -110,25 +102,10 @@ class KunjunganController extends Controller
         }
 
         $request->validate([
-            'siswa_id' => 'nullable|exists:siswas,id',
-            'guru_id' => 'nullable|exists:gurus,id',
+            'anggota_id' => 'required|exists:anggotas,id',
             'tanggal_kunjungan' => 'required|date',
             'keterangan' => 'required'
         ]);
-
-        // Validasi bahwa salah satu dari siswa_id atau guru_id harus diisi
-        if (!$request->siswa_id && !$request->guru_id) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['siswa_id' => 'Pilih salah satu siswa atau guru']);
-        }
-
-        // Validasi bahwa tidak boleh memilih keduanya
-        if ($request->siswa_id && $request->guru_id) {
-            return redirect()->back()
-                ->withInput()
-                ->withErrors(['siswa_id' => 'Hanya bisa memilih salah satu siswa atau guru']);
-        }
 
         $kunjungan->update($request->all());
 
@@ -157,25 +134,16 @@ class KunjunganController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $query = Kunjungan::with(['siswa.kelas', 'guru']);
+        $query = Kunjungan::with(['anggota.siswa', 'anggota.guru']);
         
         if ($startDate && $endDate) {
             $query->whereBetween('tanggal_kunjungan', [$startDate, $endDate]);
         }
 
-        $kunjunganSiswa = (clone $query)
-            ->whereNotNull('siswa_id')
-            ->latest()
-            ->get();
-            
-        $kunjunganGuru = (clone $query)
-            ->whereNotNull('guru_id')
-            ->latest()
-            ->get();
+        $kunjungans = $query->latest()->get();
             
         $pdf = PDF::loadView('kunjungan.pdf', [
-            'kunjunganSiswa' => $kunjunganSiswa,
-            'kunjunganGuru' => $kunjunganGuru,
+            'kunjungans' => $kunjungans,
             'startDate' => $startDate,
             'endDate' => $endDate
         ]);

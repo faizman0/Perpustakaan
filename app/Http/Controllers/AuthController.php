@@ -22,8 +22,10 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        $credentials = $request->only('username', 'password');
+
         // Coba melakukan login
-        if (Auth::attempt(['username' => $request->username, 'password' => $request->password])) {
+        if (Auth::attempt($credentials)) {
             // Jika berhasil, regenerate session dan redirect ke halaman yang dimaksud
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');

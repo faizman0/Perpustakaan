@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Peminjaman;
-use App\Models\Siswa;
-use App\Models\Guru;
+use App\Models\Anggota;
 use App\Models\Buku;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,19 +25,12 @@ class PeminjamanController extends Controller
     public function index()
     {
         $this->middleware('role:admin|petugas');
-        $peminjamanSiswa = Peminjaman::with(['siswa.kelas', 'buku.kategori'])
-            ->whereNotNull('siswa_id')
-            ->latest()
-            ->get();
-        
-        $peminjamanGuru = Peminjaman::with(['guru', 'buku.kategori'])
-            ->whereNotNull('guru_id')
+        $peminjamans = Peminjaman::with(['anggota.siswa', 'anggota.guru', 'buku.kategori'])
             ->latest()
             ->get();
             
         return view('peminjaman.index', [
-            'peminjamanSiswa' => $peminjamanSiswa,
-            'peminjamanGuru' => $peminjamanGuru,
+            'peminjamans' => $peminjamans,
             'key' => 'peminjaman'
         ]);
     }
@@ -47,12 +39,10 @@ class PeminjamanController extends Controller
     {
         $this->middleware('role:admin|petugas');
         $bukus = Buku::where('jumlah', '>', 0)->get();
-        $siswas = Siswa::all();
-        $gurus = Guru::all();
+        $anggotas = Anggota::with(['siswa', 'guru'])->get();
         return view('peminjaman.create', [
             'bukus' => $bukus,
-            'siswas' => $siswas,
-            'gurus' => $gurus,
+            'anggotas' => $anggotas,
             'key' => 'peminjaman'
         ]);
     }
@@ -63,11 +53,25 @@ class PeminjamanController extends Controller
         $request->validate([
             'buku_ids' => 'required|array|min:1|max:3',
             'buku_ids.*' => 'exists:bukus,id',
-            'siswa_id' => 'required_without:guru_id|exists:siswas,id',
-            'guru_id' => 'required_without:siswa_id|exists:gurus,id',
+            'anggota_id' => 'required|exists:anggotas,id',
             'tanggal_pinjam' => 'required|date',
-            'tanggal_kembali' => 'nullable|date',
+            'tanggal_kembali' => 'nullable|date|after:tanggal_pinjam',
         ]);
+
+        // Cek apakah anggota sudah meminjam buku yang sama dan belum dikembalikan
+        foreach ($request->buku_ids as $bukuId) {
+            $existingPeminjaman = Peminjaman::where('anggota_id', $request->anggota_id)
+                ->where('buku_id', $bukuId)
+                ->whereDoesntHave('pengembalian')
+                ->first();
+
+            if ($existingPeminjaman) {
+                $buku = Buku::find($bukuId);
+                return redirect()->back()
+                    ->with('error', 'Anggota sudah meminjam buku "' . $buku->judul . '" dan belum dikembalikan.')
+                    ->withInput();
+            }
+        }
 
         // Cek stok buku untuk setiap buku yang dipilih
         foreach ($request->buku_ids as $bukuId) {
@@ -87,8 +91,7 @@ class PeminjamanController extends Controller
             // Buat peminjaman untuk setiap buku
             Peminjaman::create([
                 'buku_id' => $bukuId,
-                'siswa_id' => $request->siswa_id,
-                'guru_id' => $request->guru_id,
+                'anggota_id' => $request->anggota_id,
                 'tanggal_pinjam' => $request->tanggal_pinjam,
                 'tanggal_kembali' => $request->tanggal_kembali,
             ]);
@@ -108,13 +111,11 @@ class PeminjamanController extends Controller
     {
         $this->middleware('role:admin');
         $bukus = Buku::all();
-        $siswas = Siswa::all();
-        $gurus = Guru::all();
+        $anggotas = Anggota::with(['siswa', 'guru'])->get();
         return view('peminjaman.edit', [
             'peminjaman' => $peminjaman,
             'bukus' => $bukus,
-            'siswas' => $siswas,
-            'gurus' => $gurus,
+            'anggotas' => $anggotas,
             'key' => 'peminjaman'
         ]);
     }
@@ -123,12 +124,10 @@ class PeminjamanController extends Controller
     {
         $this->middleware('role:admin');
         $request->validate([
-            'buku_ids' => 'required|array|min:1|max:3',
-            'buku_ids.*' => 'exists:bukus,id',
-            'siswa_id' => 'required_without:guru_id|exists:siswas,id',
-            'guru_id' => 'required_without:siswa_id|exists:gurus,id',
+            'buku_id' => 'required|exists:bukus,id',
+            'anggota_id' => 'required|exists:anggotas,id',
             'tanggal_pinjam' => 'required|date',
-            'tanggal_kembali' => 'required|date|after:tanggal_pinjam',
+            'tanggal_kembali' => '|date|after:tanggal_pinjam',
             'keterangan' => 'nullable'
         ]);
 
@@ -168,19 +167,12 @@ class PeminjamanController extends Controller
     public function exportPdf()
     {
         $this->middleware('role:admin');
-        $peminjamanSiswa = Peminjaman::with(['siswa.kelas', 'buku.kategori'])
-            ->whereNotNull('siswa_id')
-            ->latest()
-            ->get();
-        
-        $peminjamanGuru = Peminjaman::with(['guru', 'buku.kategori'])
-            ->whereNotNull('guru_id')
+        $peminjamans = Peminjaman::with(['anggota.siswa', 'anggota.guru', 'buku.kategori'])
             ->latest()
             ->get();
 
         $pdf = PDF::loadView('peminjaman.pdf', [
-            'peminjamanSiswa' => $peminjamanSiswa,
-            'peminjamanGuru' => $peminjamanGuru
+            'peminjamans' => $peminjamans
         ]);
 
         return $pdf->download('laporan-peminjaman.pdf');
@@ -189,16 +181,23 @@ class PeminjamanController extends Controller
     public function exportExcel()
     {
         $this->middleware('role:admin');
-        $peminjamanSiswa = Peminjaman::with(['siswa.kelas', 'buku.kategori'])
-            ->whereNotNull('siswa_id')
-            ->latest()
-            ->get();
-        
-        $peminjamanGuru = Peminjaman::with(['guru', 'buku.kategori'])
-            ->whereNotNull('guru_id')
+        $peminjamans = Peminjaman::with(['anggota.siswa', 'anggota.guru', 'buku.kategori'])
             ->latest()
             ->get();
 
-        return Excel::download(new PeminjamanExport($peminjamanSiswa, $peminjamanGuru), 'laporan-peminjaman.xlsx');
+        return Excel::download(new PeminjamanExport($peminjamans), 'laporan-peminjaman.xlsx');
+    }
+
+    /**
+     * Export PDF untuk satu data peminjaman
+     */
+    public function exportSinglePdf($id)
+    {
+        $this->middleware('role:admin');
+        $peminjaman = Peminjaman::with(['anggota.siswa', 'anggota.guru', 'buku.kategori'])->findOrFail($id);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('peminjaman.bukti', [
+            'peminjaman' => $peminjaman
+        ]);
+        return $pdf->download('bukti-peminjaman-'.$peminjaman->id.'.pdf');
     }
 }

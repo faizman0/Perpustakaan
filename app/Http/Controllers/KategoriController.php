@@ -27,6 +27,9 @@ class KategoriController extends Controller
     {
         $request->validate([
             'nama' => 'required|unique:kategoris',
+        ], [
+            'nama.required' => 'Nama kategori wajib diisi',
+            'nama.unique' => 'Nama kategori sudah ada'
         ]);
 
         Kategori::create($request->all());
@@ -45,10 +48,13 @@ class KategoriController extends Controller
     {
         $request->validate([
             'nama' => 'required|unique:kategoris,nama,' . $kategori->id,
+        ], [
+            'nama.required' => 'Nama kategori wajib diisi',
+            'nama.unique' => 'Nama kategori sudah ada'
         ]);
 
         $kategori->update($request->all());
-        return redirect()->route('admin.kategori.index')->with('success', 'Kategori berhasil diperbarui.');
+        return redirect()->route('admin.kategori.index')->with('success', 'Kategori berhasil diedit.');
     }
 
     public function destroy(Kategori $kategori)

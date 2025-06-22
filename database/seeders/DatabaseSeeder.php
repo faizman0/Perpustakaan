@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin',
             'username' => 'admin',
             'email' => 'admin@admin.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('Admin123456'),
         ]);
 
         // Buat user petugas default
@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Petugas',
             'username' => 'petugas',
             'email' => 'petugas@petugas.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('Petugas123456'),
         ]);
 
         // Jalankan seeder role dan permission

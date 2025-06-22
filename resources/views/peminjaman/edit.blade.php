@@ -12,7 +12,9 @@
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
     @endif
 
@@ -25,106 +27,69 @@
                 @csrf
                 @method('PUT')
 
-                <!-- Pilihan Tipe Peminjam -->
+                <!-- Pilihan Anggota -->
                 <div class="card mb-4">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Pilih Jenis Peminjam <span class="text-warning">*</span></h5>
+                        <h5 class="mb-0">Pilih Anggota <span class="text-warning">*</span></h5>
                     </div>
                     <div class="card-body">
-                        <!-- Tab Navigation -->
-                        <ul class="nav nav-tabs mb-3" id="peminjamTabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link {{ $peminjaman->siswa_id ? 'active' : '' }}" id="siswa-tab" data-bs-toggle="tab" 
-                                        data-bs-target="#siswa" type="button" role="tab" 
-                                        aria-controls="siswa" aria-selected="{{ $peminjaman->siswa_id ? 'true' : 'false' }}">
-                                    <i class="fas fa-user-graduate me-1"></i> Siswa
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link {{ $peminjaman->guru_id ? 'active' : '' }}" id="guru-tab" data-bs-toggle="tab" 
-                                        data-bs-target="#guru" type="button" role="tab" 
-                                        aria-controls="guru" aria-selected="{{ $peminjaman->guru_id ? 'true' : 'false' }}">
-                                    <i class="fas fa-chalkboard-teacher me-1"></i> Guru
-                                </button>
-                            </li>
-                        </ul>
-                        
-                        <!-- Tab Content -->
-                        <div class="tab-content" id="peminjamTabContent">
-                            <input type="hidden" name="tipe_peminjam" id="tipe_peminjam" value="{{ $peminjaman->siswa_id ? 'siswa' : 'guru' }}">
-                            <div class="tab-pane fade {{ $peminjaman->siswa_id ? 'show active' : '' }}" id="siswa" role="tabpanel" aria-labelledby="siswa-tab">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-striped" id="tabelSiswa">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th width="5%">Pilih</th>
-                                                <th>Nama</th>
-                                                <th>NIS</th>
-                                                <th>Kelas</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse ($siswas as $siswa)
-                                                <tr>
-                                                    <td>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input peminjam-radio" type="radio" 
-                                                                   name="siswa_id" value="{{ $siswa->id }}" 
-                                                                   id="siswa_{{ $siswa->id }}"
-                                                                   {{ $peminjaman->siswa_id == $siswa->id ? 'checked' : '' }}
-                                                                   onchange="handlePeminjamChange('siswa')">
-                                                        </div>
-                                                    </td>
-                                                    <td><label for="siswa_{{ $siswa->id }}">{{ $siswa->nama }}</label></td>
-                                                    <td>{{ $siswa->nis }}</td>
-                                                    <td>{{ $siswa->kelas->nama_kelas ?? '-' }}</td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="4" class="text-center">Tidak ada data siswa</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <div class="tab-pane fade {{ $peminjaman->guru_id ? 'show active' : '' }}" id="guru" role="tabpanel" aria-labelledby="guru-tab">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-striped" id="tabelGuru">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th width="5%">Pilih</th>
-                                                <th>Nama</th>
-                                                <th>NIP</th>
-                                                <th>Jenis Kelamin</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse ($gurus as $guru)
-                                                <tr>
-                                                    <td>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input peminjam-radio" type="radio" 
-                                                                   name="guru_id" value="{{ $guru->id }}" 
-                                                                   id="guru_{{ $guru->id }}"
-                                                                   {{ $peminjaman->guru_id == $guru->id ? 'checked' : '' }}
-                                                                   onchange="handlePeminjamChange('guru')">
-                                                        </div>
-                                                    </td>
-                                                    <td><label for="guru_{{ $guru->id }}">{{ $guru->nama }}</label></td>
-                                                    <td>{{ $guru->nip }}</td>
-                                                    <td>{{ $guru->jenis_kelamin }}</td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="4" class="text-center">Tidak ada data guru</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped" id="tabelAnggota">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="5%">Pilih</th>
+                                        <th width="15%">Kode Anggota</th>
+                                        <th width="25%">Nama</th>
+                                        <th width="15%">Tipe</th>
+                                        <th width="20%">NIS/NIP</th>
+                                        <th width="10%">Jenis Kelamin</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($anggotas as $anggota)
+                                        <tr onclick="document.getElementById('anggota_{{ $anggota->id }}').checked = true;" style="cursor: pointer;">
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input anggota-radio" type="radio" 
+                                                           name="anggota_id" value="{{ $anggota->id }}" 
+                                                           id="anggota_{{ $anggota->id }}"
+                                                           {{ old('anggota_id', $peminjaman->anggota_id) == $anggota->id ? 'checked' : '' }}
+                                                           style="width: 35px; height: 35px; position: relative;">
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-primary">{{ $anggota->kode_anggota }}</span>
+                                            </td>
+                                            <td>{{ $anggota->nama }}</td>
+                                            <td>
+                                                @if($anggota->tipe == 'Siswa')
+                                                    <span class="badge badge-success">Siswa</span>
+                                                @else
+                                                    <span class="badge badge-info">Guru</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($anggota->siswa)
+                                                    {{ $anggota->siswa->nis }}
+                                                @elseif($anggota->guru)
+                                                    {{ $anggota->guru->nip }}
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($anggota->siswa)
+                                                    {{ $anggota->siswa->jenis_kelamin }}
+                                                @elseif($anggota->guru)
+                                                    {{ $anggota->guru->jenis_kelamin }}
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center">Tidak ada data anggota</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -154,7 +119,7 @@
                                                     <input class="form-check-input" type="radio" 
                                                            name="buku_id" value="{{ $buku->id }}" 
                                                            id="buku_{{ $buku->id }}"
-                                                           {{ $peminjaman->buku_id == $buku->id ? 'checked' : '' }}
+                                                           {{ old('buku_id', $peminjaman->buku_id) == $buku->id ? 'checked' : '' }}
                                                            {{ $buku->jumlah < 1 && $buku->id != $peminjaman->buku_id ? 'disabled' : '' }}>
                                                 </div>
                                             </td>
@@ -188,16 +153,23 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="tanggal_pinjam" class="form-label">Tanggal Peminjaman <span class="text-warning">*</span></label>
-                                    <input type="date" class="form-control" id="tanggal_pinjam" name="tanggal_pinjam" 
-                                           value="{{ $peminjaman->tanggal_pinjam }}" required>
+                                    <label for="tanggal_peminjaman" class="form-label">Tanggal Peminjaman <span class="text-warning">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="tanggal_peminjaman" name="tanggal_peminjaman" value="{{ old('tanggal_peminjaman', \Carbon\Carbon::parse($peminjaman->tanggal_peminjaman)->format('Y-m-d\TH:i')) }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="tanggal_kembali" class="form-label">Tanggal Kembali</label>
-                                    <input type="date" class="form-control" id="tanggal_kembali" name="tanggal_kembali" 
-                                           value="{{ $peminjaman->tanggal_kembali }}">
+                                    <label for="tanggal_pengembalian" class="form-label">Tanggal Pengembalian <span class="text-warning">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="tanggal_pengembalian" name="tanggal_pengembalian" value="{{ old('tanggal_pengembalian', \Carbon\Carbon::parse($peminjaman->tanggal_pengembalian)->format('Y-m-d\TH:i')) }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="keterangan" class="form-label">Keterangan</label>
+                                    <textarea class="form-control" id="keterangan" name="keterangan" rows="3" 
+                                              placeholder="Masukkan keterangan peminjaman">{{ old('keterangan', $peminjaman->keterangan) }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -210,7 +182,7 @@
                         <i class="fas fa-arrow-left"></i> Kembali
                     </a>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan Perubahan
+                        <i class="fas fa-save"></i> Update Peminjaman
                     </button>
                 </div>
             </form>
@@ -220,22 +192,54 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-    function handlePeminjamChange(tipe) {
-        // Update hidden input value
-        document.getElementById('tipe_peminjam').value = tipe;
-        
-        // Reset other type's radio buttons
-        if (tipe === 'siswa') {
-            document.querySelectorAll('input[name="guru_id"]').forEach(radio => {
-                radio.checked = false;
-            });
-        } else {
-            document.querySelectorAll('input[name="siswa_id"]').forEach(radio => {
-                radio.checked = false;
-            });
+$(document).ready(function() {
+    // Inisialisasi DataTable untuk tabel anggota
+    $('#tabelAnggota').DataTable({
+        "responsive": true,
+        "language": {
+            "search": "Cari:",
+            "lengthMenu": "Tampilkan _MENU_ data per halaman",
+            "zeroRecords": "Data tidak ditemukan",
+            "info": "Menampilkan halaman _PAGE_ dari _PAGES_",
+            "infoEmpty": "Tidak ada data yang tersedia",
+            "infoFiltered": "(difilter dari _MAX_ total data)",
+            "paginate": {
+                "first": "Pertama",
+                "last": "Terakhir", 
+                "next": "Selanjutnya",
+                "previous": "Sebelumnya"
+            }
         }
-    }
+    });
+
+    // Validasi form sebelum submit
+    $('form').on('submit', function(e) {
+        const selectedAnggota = $('input[name="anggota_id"]:checked').val();
+        const selectedBook = $('input[name="buku_id"]:checked').val();
+        
+        if (!selectedAnggota) {
+            e.preventDefault();
+            alert('Silakan pilih anggota terlebih dahulu!');
+            return false;
+        }
+
+        if (!selectedBook) {
+            e.preventDefault();
+            alert('Silakan pilih buku terlebih dahulu!');
+            return false;
+        }
+
+        const tanggalPeminjaman = $('#tanggal_peminjaman').val();
+        const tanggalPengembalian = $('#tanggal_pengembalian').val();
+        
+        if (tanggalPengembalian <= tanggalPeminjaman) {
+            e.preventDefault();
+            alert('Tanggal pengembalian harus lebih besar dari tanggal peminjaman!');
+            return false;
+        }
+    });
+});
 </script>
-@endsection
+@endpush

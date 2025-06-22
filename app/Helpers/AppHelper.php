@@ -46,7 +46,7 @@ class AppHelper
 
     public static function getUpdateRoute($feature, $id)
     {
-        return \App\Helpers\RouteHelper::route($feature . '.update', ['id' => $id]);
+        return \App\Helpers\RouteHelper::route($feature . '.update', [$feature => $id]);
     }
 
     public static function getStoreRoute($feature)
@@ -103,7 +103,7 @@ class AppHelper
 
     public static function getImportButtons($feature)
     {
-        return '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+        return '<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#importModal">
                     <i class="fas fa-file-import"></i> Import Excel
                 </button>
                 <a href="' . self::getTemplateRoute($feature) . '" class="btn btn-info">

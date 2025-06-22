@@ -49,7 +49,7 @@
                             </div>
 
                             <div class="d-flex justify-content-between">
-                                <a href="{{ route('admin.guru.index') }}" class="btn btn-secondary">Kembali</a>
+                                <a href="{{ url('/admin/guru') }}" class="btn btn-secondary">Kembali</a>
                                 <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                             </div>
                         </form>

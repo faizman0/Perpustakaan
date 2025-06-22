@@ -60,6 +60,12 @@ class RolePermissionSeeder extends Seeder
             ['nama' => 'Edit Guru', 'slug' => 'edit-guru'],
             ['nama' => 'Hapus Guru', 'slug' => 'delete-guru'],
             
+            // Permissions untuk Anggota
+            ['nama' => 'Lihat Anggota', 'slug' => 'index-anggota'],
+            ['nama' => 'Tambah Anggota', 'slug' => 'create-anggota'],
+            ['nama' => 'Edit Anggota', 'slug' => 'edit-anggota'],
+            ['nama' => 'Hapus Anggota', 'slug' => 'delete-anggota'],
+            
             // Permissions untuk Kunjungan
             ['nama' => 'Lihat Kunjungan', 'slug' => 'index-kunjungan'],
             ['nama' => 'Tambah Kunjungan', 'slug' => 'create-kunjungan'],
@@ -111,6 +117,9 @@ class RolePermissionSeeder extends Seeder
 
                 // Siswa (CR)
                 'index-siswa', 'create-siswa',
+
+                // Anggota (CR)
+                'index-anggota', 'create-anggota',
             ])->get()
         );
 

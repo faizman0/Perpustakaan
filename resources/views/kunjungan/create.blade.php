@@ -12,7 +12,9 @@
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
     @endif
 
@@ -20,146 +22,78 @@
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <h5 class="alert-heading">Error!</h5>
             {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
     @endif
 
     <form action="{{ auth()->user()->hasRole('admin') ? route('admin.kunjungan.store') : route('petugas.kunjungan.store') }}" method="POST" id="kunjunganForm">
         @csrf
 
-        <!-- Pilihan Tipe Pengunjung -->
+        <!-- Pilihan Anggota -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Pilih Jenis Pengunjung <span class="text-warning">*</span></h5>
+                <h5 class="mb-0">Pilih Anggota <span class="text-warning">*</span></h5>
             </div>
             <div class="card-body">
-                <!-- Tab Navigation -->
-                <ul class="nav nav-tabs mb-3" id="pengunjungTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="siswa-tab" data-bs-toggle="tab" 
-                                data-bs-target="#siswa" type="button" role="tab" 
-                                aria-controls="siswa" aria-selected="true"
-                                onclick="handleTabChange('siswa')">
-                            <i class="fas fa-user-graduate me-1"></i> Siswa
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="guru-tab" data-bs-toggle="tab" 
-                                data-bs-target="#guru" type="button" role="tab" 
-                                aria-controls="guru" aria-selected="false"
-                                onclick="handleTabChange('guru')">
-                            <i class="fas fa-chalkboard-teacher me-1"></i> Guru
-                        </button>
-                    </li>
-                </ul>
-                
-                <!-- Tab Content -->
-                <div class="tab-content" id="pengunjungTabContent">
-                    <input type="hidden" name="tipe_pengunjung" id="tipe_pengunjung" value="siswa">
-                    <div class="tab-pane fade show active" id="siswa" role="tabpanel" aria-labelledby="siswa-tab">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped" id="tabelSiswa">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th width="5%">Pilih</th>
-                                        <th>Nama</th>
-                                        <th>NIS</th>
-                                        <th>Kelas</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($siswas as $siswa)
-                                        <tr>
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input pengunjung-radio" type="radio" 
-                                                           name="siswa_id" value="{{ $siswa->id }}" 
-                                                           id="siswa_{{ $siswa->id }}"
-                                                           onchange="handlePengunjungChange('siswa')">
-                                                </div>
-                                            </td>
-                                            <td><label for="siswa_{{ $siswa->id }}">{{ $siswa->nama }}</label></td>
-                                            <td>{{ $siswa->nis }}</td>
-                                            <td>{{ $siswa->kelas->nama_kelas ?? '-' }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="4" class="text-center">Tidak ada data siswa</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="tab-pane fade" id="guru" role="tabpanel" aria-labelledby="guru-tab">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped" id="tabelGuru">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th width="5%">Pilih</th>
-                                        <th>Nama</th>
-                                        <th>NIP</th>
-                                        <th>Jenis Kelamin</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($gurus as $guru)
-                                        <tr>
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input pengunjung-radio" type="radio" 
-                                                           name="guru_id" value="{{ $guru->id }}" 
-                                                           id="guru_{{ $guru->id }}"
-                                                           onchange="handlePengunjungChange('guru')">
-                                                </div>
-                                            </td>
-                                            <td><label for="guru_{{ $guru->id }}">{{ $guru->nama }}</label></td>
-                                            <td>{{ $guru->nip }}</td>
-                                            <td>{{ $guru->jenis_kelamin }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="4" class="text-center">Tidak ada data guru</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="tabelAnggota">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="5%">Pilih</th>
+                                <th width="15%">Kode Anggota</th>
+                                <th width="25%">Nama</th>
+                                <th width="15%">Tipe</th>
+                                <th width="20%">NIS/NIP</th>
+                                <th width="10%">Jenis Kelamin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($anggotas as $anggota)
+                                <tr onclick="let cb = document.getElementById('anggota_{{ $anggota->id }}'); cb.checked = !cb.checked;" style="cursor: pointer;">
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                   name="anggota_ids[]" value="{{ $anggota->id }}"
+                                                   id="anggota_{{ $anggota->id }}"
+                                                   style="width: 35px; height: 35px; position: relative;">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-primary">{{ $anggota->kode_anggota }}</span>
+                                    </td>
+                                    <td>{{ $anggota->nama }}</td>
+                                    <td>
+                                        @if($anggota->tipe == 'Siswa')
+                                            <span class="badge badge-success">Siswa</span>
+                                        @else
+                                            <span class="badge badge-info">Guru</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($anggota->siswa)
+                                            {{ $anggota->siswa->nis }}
+                                        @elseif($anggota->guru)
+                                            {{ $anggota->guru->nip }}
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($anggota->siswa)
+                                            {{ $anggota->siswa->jenis_kelamin }}
+                                        @elseif($anggota->guru)
+                                            {{ $anggota->guru->jenis_kelamin }}
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center">Tidak ada data anggota</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-
-                <script>
-                function handleTabChange(tipe) {
-                    document.getElementById('tipe_pengunjung').value = tipe;
-                    
-                    // Reset radio buttons when switching tabs
-                    if (tipe === 'siswa') {
-                        document.querySelectorAll('input[name="guru_id"]').forEach(radio => {
-                            radio.checked = false;
-                        });
-                    } else {
-                        document.querySelectorAll('input[name="siswa_id"]').forEach(radio => {
-                            radio.checked = false;
-                        });
-                    }
-                }
-
-                function handlePengunjungChange(tipe) {
-                    document.getElementById('tipe_pengunjung').value = tipe;
-                    
-                    // Reset other type's radio buttons
-                    if (tipe === 'siswa') {
-                        document.querySelectorAll('input[name="guru_id"]').forEach(radio => {
-                            radio.checked = false;
-                        });
-                    } else {
-                        document.querySelectorAll('input[name="siswa_id"]').forEach(radio => {
-                            radio.checked = false;
-                        });
-                    }
-                }
-                </script>
             </div>
         </div>
 
@@ -173,9 +107,8 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="tanggal_kunjungan" class="form-label">Tanggal Kunjungan <span class="text-warning">*</span></label>
-                            <input type="date" class="form-control" id="tanggal_kunjungan" name="tanggal_kunjungan" 
-                                   value="{{ date('Y-m-d') }}" required>
-                            <div class="form-text">Tanggal tidak boleh melebihi hari ini</div>
+                            <input type="datetime-local" class="form-control" id="tanggal_kunjungan" name="tanggal_kunjungan" value="{{ old('tanggal_kunjungan', now('Asia/Jakarta')->format('Y-m-d\TH:i')) }}" required>
+                            <div class="form-text">Tanggal dan waktu tidak boleh melebihi saat ini</div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -194,82 +127,54 @@
             <a href="{{ auth()->user()->hasRole('admin') ? route('admin.kunjungan.index') : route('petugas.kunjungan.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>
-            <button type="submit" class="btn btn-primary" id="submit-btn">
+            <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Simpan Kunjungan
             </button>
         </div>
-    </form></div>
+    </form>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Initialize DataTables for both tables
-    $('#tabelSiswa, #tabelGuru').DataTable({
+    // Inisialisasi DataTable untuk tabel anggota
+    $('#tabelAnggota').DataTable({
         "responsive": true,
-        "autoWidth": false,
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
+            "search": "Cari:",
+            "lengthMenu": "Tampilkan _MENU_ data per halaman",
+            "zeroRecords": "Data tidak ditemukan",
+            "info": "Menampilkan halaman _PAGE_ dari _PAGES_",
+            "infoEmpty": "Tidak ada data yang tersedia",
+            "infoFiltered": "(difilter dari _MAX_ total data)",
+            "paginate": {
+                "first": "Pertama",
+                "last": "Terakhir", 
+                "next": "Selanjutnya",
+                "previous": "Sebelumnya"
+            }
         }
     });
 
-    // Handle radio button changes
-    $('input[name="siswa_id"]').on('change', function() {
-        if ($(this).is(':checked')) {
-            $('#tipe_pengunjung').val('siswa');
-            $('input[name="guru_id"]').prop('checked', false);
-        }
-    });
-
-    $('input[name="guru_id"]').on('change', function() {
-        if ($(this).is(':checked')) {
-            $('#tipe_pengunjung').val('guru');
-            $('input[name="siswa_id"]').prop('checked', false);
-        }
-    });
-
-    // Handle tab switching
-    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-        const targetId = $(e.target).attr('data-bs-target');
+    // Validasi form sebelum submit
+    $('#kunjunganForm').on('submit', function(e) {
+        const selectedAnggota = $('input[name="anggota_ids[]"]:checked').length;
         
-        // Reset radio buttons based on which tab is active
-        if (targetId === '#siswa') {
-            $('#tipe_pengunjung').val('siswa');
-            $('input[name="guru_id"]').prop('checked', false);
-        } else if (targetId === '#guru') {
-            $('#tipe_pengunjung').val('guru');
-            $('input[name="siswa_id"]').prop('checked', false);
-        }
-    });
-
-    // Form validation
-    $('#kunjunganForm').submit(function(e) {
-        let errors = [];
-        
-        // Validasi pengunjung
-        const tipePengunjung = $('#tipe_pengunjung').val();
-        const siswaSelected = $('input[name="siswa_id"]:checked').length > 0;
-        const guruSelected = $('input[name="guru_id"]:checked').length > 0;
-        
-        if ((tipePengunjung === 'siswa' && !siswaSelected) || 
-            (tipePengunjung === 'guru' && !guruSelected)) {
-            errors.push('• Pilih pengunjung yang sesuai');
-        }
-        
-        // Validasi tanggal
-        const today = new Date().toISOString().split('T')[0];
-        const tanggalKunjungan = $('#tanggal_kunjungan').val();
-        
-        if (!tanggalKunjungan) {
-            errors.push('• Tanggal kunjungan harus diisi');
-        } else if (tanggalKunjungan > today) {
-            errors.push('• Tanggal kunjungan tidak boleh melebihi hari ini');
-        }
-        
-        // Tampilkan error jika ada
-        if (errors.length > 0) {
+        if (selectedAnggota === 0) {
             e.preventDefault();
-            alert('Mohon perbaiki kesalahan berikut:\n' + errors.join('\n'));
+            alert('Silakan pilih minimal satu anggota!');
+            return false;
+        }
+
+        const tanggalKunjungan = $('#tanggal_kunjungan').val();
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (tanggalKunjungan > today) {
+            e.preventDefault();
+            alert('Tanggal kunjungan tidak boleh melebihi hari ini!');
+            return false;
         }
     });
 });

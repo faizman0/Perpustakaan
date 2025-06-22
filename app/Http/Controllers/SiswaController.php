@@ -46,10 +46,22 @@ class SiswaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
-            'nis' => 'required|unique:siswas',
+            'nama' => 'required|string|max:255|regex:/^[\p{L}\s]+$/u',
+            'nis' => 'required|max:20|unique:siswas',
             'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
             'kelas_id' => 'required|exists:kelas,id',
+        ], [
+            'nama.required' => 'Nama siswa wajib diisi',
+            'nama.string' => 'Nama siswa harus berupa teks',
+            'nama.max' => 'Nama siswa maksimal 255 karakter',
+            'nama.regex' => 'Nama siswa hanya boleh berisi huruf dan spasi',
+            'nis.required' => 'NIS siswa wajib diisi',
+            'nis.max' => 'NIS siswa maksimal 20 karakter',
+            'nis.unique' => 'NIS siswa sudah terdaftar dalam sistem',
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih',
+            'jenis_kelamin.in' => 'Jenis kelamin harus dipilih antara Laki-laki atau Perempuan',
+            'kelas_id.required' => 'Kelas wajib dipilih',
+            'kelas_id.exists' => 'Kelas yang dipilih tidak valid'
         ]);
 
         Siswa::create($request->all());
@@ -63,7 +75,7 @@ class SiswaController extends Controller
     {
         try {
             if (!$siswa) {
-                return redirect()->route('admin.siswa.index')
+                return redirect()->route(auth()->user()->hasRole('admin') ? 'admin.siswa.index' : 'petugas.siswa.index')
                     ->with('error', 'Siswa tidak ditemukan.');
             }
 
@@ -74,7 +86,7 @@ class SiswaController extends Controller
                 'key' => 'siswa'
             ]);
         } catch (\Exception $e) {
-            return redirect()->route('admin.siswa.index')
+            return redirect()->route(auth()->user()->hasRole('admin') ? 'admin.siswa.index' : 'petugas.siswa.index')
                 ->with('error', 'Terjadi kesalahan saat mengedit siswa: ' . $e->getMessage());
         }
     }
@@ -86,7 +98,7 @@ class SiswaController extends Controller
     {
         try {
             if (!$siswa) {
-                return redirect()->route('admin.siswa.index')
+                return redirect()->route(auth()->user()->hasRole('admin') ? 'admin.siswa.index' : 'petugas.siswa.index')
                     ->with('error', 'Siswa tidak ditemukan.');
             }
 
@@ -94,16 +106,22 @@ class SiswaController extends Controller
                 'nama' => ['required', 'string', 'max:255', 'regex:/^[\p{L}\s]+$/u'],
                 'nis' => [
                     'required',
-                    'string',
                     'max:20',
-                    'regex:/^[0-9]+$/',
                     'unique:siswas,nis,' . $siswa->id
                 ],
                 'jenis_kelamin' => ['required', 'in:Laki-laki,Perempuan'],
                 'kelas_id' => ['required', 'exists:kelas,id'],
             ], [
-                'nama.regex' => 'Nama hanya boleh berisi huruf dan spasi',
-                'nis.regex' => 'NIS hanya boleh berisi angka',
+                'nama.required' => 'Nama siswa wajib diisi',
+                'nama.string' => 'Nama siswa harus berupa teks',
+                'nama.max' => 'Nama siswa maksimal 255 karakter',
+                'nama.regex' => 'Nama siswa hanya boleh berisi huruf dan spasi',
+                'nis.required' => 'NIS siswa wajib diisi',
+                'nis.max' => 'NIS siswa maksimal 20 karakter',
+                'nis.unique' => 'NIS siswa sudah terdaftar dalam sistem',
+                'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih',
+                'jenis_kelamin.in' => 'Jenis kelamin harus dipilih antara Laki-laki atau Perempuan',
+                'kelas_id.required' => 'Kelas wajib dipilih',
                 'kelas_id.exists' => 'Kelas yang dipilih tidak valid'
             ]);
 
@@ -113,14 +131,14 @@ class SiswaController extends Controller
 
             $siswa->update($validated);
 
-            return redirect()->route('admin.siswa.index')
+            return redirect()->route(auth()->user()->hasRole('admin') ? 'admin.siswa.index' : 'petugas.siswa.index')
                 ->with('success', 'Data siswa berhasil diperbarui.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()
                 ->withErrors($e->validator)
                 ->withInput();
         } catch (\Exception $e) {
-            return redirect()->route('admin.siswa.index')
+            return redirect()->route(auth()->user()->hasRole('admin') ? 'admin.siswa.index' : 'petugas.siswa.index')
                 ->with('error', 'Terjadi kesalahan saat memperbarui data siswa: ' . $e->getMessage());
         }
     }
@@ -135,30 +153,16 @@ class SiswaController extends Controller
     }
 
     /**
-     * Export data member ke Excel
-     */
-    public function exportExcel()
-    {
-        return Excel::download(new SiswaExports, 'siswa.xlsx');
-    }
-
-    /**
-     * Export data member ke PDF
-     */
-    public function exportPDF(): mixed
-    {
-        $siswa = Siswa::all();
-        $pdf = PDF::loadView('siswa.pdf', compact('siswa'));
-        return $pdf->download('siswa.pdf');
-    }
-
-    /**
-     * Import data member dari Excel
+     * Import data dari Excel
      */
     public function importExcel(Request $request)
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls|max:2048' // Max 2MB
+        ], [
+            'file.required' => 'File Excel wajib diunggah',
+            'file.mimes' => 'File harus berformat Excel (.xlsx atau .xls)',
+            'file.max' => 'Ukuran file maksimal 2MB'
         ]);
 
         try {
@@ -169,26 +173,39 @@ class SiswaController extends Controller
             $errorCount = $import->getErrorCount();
             $errors = $import->getErrors();
 
-            $message = "Import selesai. Berhasil: {$successCount}, Gagal: {$errorCount}";
-            
             if ($errorCount > 0) {
-                $message .= "\nDetail error:";
+                $errorMessage = "Import selesai dengan beberapa kesalahan:\n";
+                $errorMessage .= "✓ Berhasil diimpor: {$successCount} data\n";
+                $errorMessage .= "✗ Gagal diimpor: {$errorCount} data\n";
+                $errorMessage .= "Detail kesalahan:\n";
+                
                 foreach ($errors as $error) {
-                    $message .= "\nBaris {$error['row']}: {$error['message']}";
+                    $errorMessage .= "Baris {$error['row']}: {$error['message']}\n";
+                    if (isset($error['values'])) {
+                        $errorMessage .= "Data: " . implode(', ', $error['values']) . "\n";
+                    }
                 }
-                return back()->with('warning', $message);
+                
+                return back()->with('warning', $errorMessage);
             }
 
-            return back()->with('success', $message);
+            return back()->with('success', "Import berhasil! {$successCount} data siswa berhasil diimpor.");
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             $failures = $e->failures();
-            $message = "Validasi gagal:\n";
+            $errorMessage = "Validasi data gagal:\n";
+            
             foreach ($failures as $failure) {
-                $message .= "Baris {$failure->row()}: " . implode(', ', $failure->errors()) . "\n";
+                $errorMessage .= "Baris {$failure->row()}: " . implode(', ', $failure->errors()) . "\n";
+                $errorMessage .= "Data: " . implode(', ', $failure->values()) . "\n";
             }
-            return back()->with('error', $message);
+            
+            return back()->with('error', $errorMessage);
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+            $errorMessage = "Terjadi kesalahan saat mengimpor data:\n";
+            $errorMessage .= $e->getMessage() . "\n";
+            $errorMessage .= "Pastikan format file Excel sesuai dengan template yang disediakan.";
+            
+            return back()->with('error', $errorMessage);
         }
     }
 

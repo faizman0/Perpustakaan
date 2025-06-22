@@ -69,7 +69,7 @@ class GuruImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
                 'message' => $e->getMessage(),
                 'values' => $row
             ];
-            Log::error("Error importing guru at row {$this->rowNumber}: " . $e->getMessage());
+            Log::error("Error importing guru pada baris {$this->rowNumber}: " . $e->getMessage());
             return null;
         }
     }
@@ -112,7 +112,7 @@ class GuruImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
     {
         return [
             '*.nama' => 'required|string|max:255|regex:/^[\p{L}\s]+$/u',
-            '*.nip' => 'required|string|max:20|regex:/^[0-9]+$/',
+            '*.nip' => 'required|numeric',
             '*.jenis_kelamin' => 'required|in:Laki-laki,Perempuan,L,P',
         ];
     }
@@ -123,7 +123,7 @@ class GuruImport implements ToModel, WithHeadingRow, WithValidation, WithBatchIn
             '*.nama.required' => 'Kolom nama wajib diisi',
             '*.nama.regex' => 'Nama hanya boleh berisi huruf dan spasi',
             '*.nip.required' => 'Kolom NIP wajib diisi',
-            '*.nip.regex' => 'NIP hanya boleh berisi angka',
+            '*.nip.numeric' => 'Kolom NIP harus berupa angka',
             '*.jenis_kelamin.required' => 'Kolom jenis kelamin wajib diisi',
             '*.jenis_kelamin.in' => 'Jenis kelamin harus Laki-laki, Perempuan, L, atau P',
         ];

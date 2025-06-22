@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('bukus', function (Blueprint $table) {
             $table->id();
-            $table->string('judul');
-            $table->string('no_inventaris')->unique()->nullable();
-            $table->string('no_klasifikasi')->unique()->nullable();
-            $table->string('pengarang');
-            $table->string('penerbit');
-            $table->year('tahun_terbit');
-            $table->year('edisi')->nullable();
-            $table->string('isbn')->unique();
-            $table->string('kolase')->nullable();
+            $table->string('judul','150');
+            $table->string('no_inventaris','50')->unique()->nullable();
+            $table->string('no_klasifikasi','50')->nullable();
+            $table->string('pengarang','100');
+            $table->string('penerbit','100');
+            $table->string('tahun_terbit','20');
+            $table->string('edisi','50')->nullable();
+            $table->string('isbn','50')->unique()->nullable();
+            $table->string('kolase','100')->nullable();
             $table->integer('jumlah');
             $table->text('keterangan')->nullable();
             $table->foreignId('kategori_id')->constrained()->onDelete('cascade');

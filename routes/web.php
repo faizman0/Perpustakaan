@@ -14,16 +14,22 @@ use App\Http\Controllers\GuruController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\AnggotaController;
+use App\Http\Controllers\LandingPageController;
 
 // Route yang bisa diakses tanpa login
-Route::get('/', [PageController::class, 'index'])->name('home');
-Route::get('/dashboard', [PageController::class, 'index'])->name('dashboard');
+Route::get('/', [LandingPageController::class, 'index'])->name('home');
+Route::get('/dashboard', [PageController::class, 'index'])->middleware('auth')->name('dashboard');
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 
 // Route yang memerlukan login
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    
+    // User profile routes
+    Route::get('/edituser', [UserController::class, 'editPassword'])->name('users.edit-password');
+    Route::post('/edituser', [UserController::class, 'updatePassword'])->name('users.update-password');
     
     // Route khusus admin
     Route::middleware(['role:admin'])->prefix('admin')->group(function () {
@@ -35,6 +41,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+        
+        // Manajemen Anggota
+        Route::get('/anggota', [AnggotaController::class, 'index'])->name('admin.anggota.index');
+        Route::post('/anggota', [AnggotaController::class, 'store'])->name('admin.anggota.store');
+        Route::get('/anggota/search', [AnggotaController::class, 'search'])->name('admin.anggota.search');
+        Route::get('/anggota/{anggota}', [AnggotaController::class, 'show'])->name('admin.anggota.show');
+        Route::delete('/anggota/{anggota}', [AnggotaController::class, 'destroy'])->name('admin.anggota.destroy');
         
         // Manajemen Buku
         Route::get('/buku', [BukuController::class, 'index'])->name('admin.buku.index');
@@ -122,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/peminjaman/{peminjaman}', [PeminjamanController::class, 'destroy'])->name('admin.peminjaman.destroy');
         Route::get('/peminjaman/export/pdf', [PeminjamanController::class, 'exportPdf'])->name('admin.peminjaman.export.pdf');
         Route::get('/peminjaman/export/excel', [PeminjamanController::class, 'exportExcel'])->name('admin.peminjaman.export.excel');
+        Route::get('/peminjaman/{peminjaman}/export/pdf', [PeminjamanController::class, 'exportSinglePdf'])->name('admin.peminjaman.export.bukti.pdf');
         
         // Manajemen Pengembalian
         Route::get('/pengembalian', [PengembalianController::class, 'index'])->name('admin.pengembalian.index');
@@ -133,21 +147,32 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/pengembalian/{pengembalian}', [PengembalianController::class, 'destroy'])->name('admin.pengembalian.destroy');
         Route::get('/pengembalian/export/pdf', [PengembalianController::class, 'exportPdf'])->name('admin.pengembalian.export.pdf');
         Route::get('/pengembalian/export/excel', [PengembalianController::class, 'exportExcel'])->name('admin.pengembalian.export.excel');
+        Route::get('/pengembalian/{pengembalian}/export/pdf', [PengembalianController::class, 'exportSinglePdf'])->name('admin.pengembalian.export.bukti.pdf');
     });
 
     // Route khusus petugas
     Route::middleware(['role:petugas'])->prefix('petugas')->name('petugas.')->group(function () {
+        // Manajemen Anggota (CR)
+        Route::get('/anggota', [AnggotaController::class, 'index'])->name('anggota.index');
+        Route::post('/anggota', [AnggotaController::class, 'store'])->name('anggota.store');
+        Route::get('/anggota/search', [AnggotaController::class, 'search'])->name('anggota.search');
+        Route::get('/anggota/{anggota}', [AnggotaController::class, 'show'])->name('anggota.show');
+        
         // Manajemen Guru (CR)
         Route::get('/guru', [GuruController::class, 'index'])->name('guru.index');
         Route::get('/guru/create', [GuruController::class, 'create'])->name('guru.create');
         Route::post('/guru', [GuruController::class, 'store'])->name('guru.store');
         Route::get('/guru/{guru}', [GuruController::class, 'show'])->name('guru.show');
+        Route::get('/guru/{guru}/edit', [GuruController::class, 'edit'])->name('guru.edit');
+        Route::put('/guru/{guru}', [GuruController::class, 'update'])->name('guru.update');
         
         // Manajemen Siswa (CR)
         Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa.index');
         Route::get('/siswa/create', [SiswaController::class, 'create'])->name('siswa.create');
         Route::post('/siswa', [SiswaController::class, 'store'])->name('siswa.store');
         Route::get('/siswa/{siswa}', [SiswaController::class, 'show'])->name('siswa.show');
+        Route::get('/siswa/{siswa}/edit', [SiswaController::class, 'edit'])->name('siswa.edit');
+        Route::put('/siswa/{siswa}', [SiswaController::class, 'update'])->name('siswa.update');
         // Kunjungan (CR)
         Route::get('/kunjungan', [KunjunganController::class, 'index'])->name('kunjungan.index');
         Route::get('/kunjungan/create', [KunjunganController::class, 'create'])->name('kunjungan.create');
@@ -165,6 +190,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pengembalian/create', [PengembalianController::class, 'create'])->name('pengembalian.create');
         Route::post('/pengembalian', [PengembalianController::class, 'store'])->name('pengembalian.store');
         Route::get('/pengembalian/{pengembalian}', [PengembalianController::class, 'show'])->name('pengembalian.show');
+
+        // Buku (CR)
+        Route::get('/buku', [BukuController::class, 'index'])->name('buku.index');
+        Route::get('/buku/create', [BukuController::class, 'create'])->name('buku.create');
+        Route::post('/buku', [BukuController::class, 'store'])->name('buku.store');
+        Route::get('/buku/{buku}', [BukuController::class, 'show'])->name('buku.show');
     });
 });
 

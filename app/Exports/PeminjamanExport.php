@@ -8,31 +8,30 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 class PeminjamanExport implements FromCollection, WithHeadings, WithMapping
 {
-    protected $peminjamanSiswa;
-    protected $peminjamanGuru;
+    protected $peminjamans;
 
-    public function __construct($peminjamanSiswa, $peminjamanGuru)
+    public function __construct($peminjamans)
     {
-        $this->peminjamanSiswa = $peminjamanSiswa;
-        $this->peminjamanGuru = $peminjamanGuru;
+        $this->peminjamans = $peminjamans;
     }
 
     public function collection()
     {
-        return $this->peminjamanSiswa->concat($this->peminjamanGuru);
+        return $this->peminjamans;
     }
 
     public function headings(): array
     {
         return [
             'No',
-            'Tipe Peminjam',
-            'Nama Peminjam',
-            'Kelas',
+            'Kode Anggota',
+            'Nama',
+            'Tipe',
+            'NIS/NIP',
             'Judul Buku',
             'Kategori',
             'Tanggal Pinjam',
-            'Tanggal Kembali',
+            'Tanggal Pengembalian',
             'Status'
         ];
     }
@@ -42,19 +41,27 @@ class PeminjamanExport implements FromCollection, WithHeadings, WithMapping
         static $rowNumber = 0;
         $rowNumber++;
 
-        $peminjam = $peminjaman->siswa_id ? $peminjaman->siswa : $peminjaman->guru;
-        $kelas = $peminjaman->siswa_id ? $peminjaman->siswa->kelas->nama_kelas : '-';
-        $status = $peminjaman->tanggal_kembali ? 'Dikembalikan' : 'Dipinjam';
+        $nisNip = '-';
+        if ($peminjaman->anggota) {
+            if ($peminjaman->anggota->siswa) {
+                $nisNip = $peminjaman->anggota->siswa->nis;
+            } elseif ($peminjaman->anggota->guru) {
+                $nisNip = $peminjaman->anggota->guru->nip;
+            }
+        }
+
+        $status = $peminjaman->pengembalian ? 'Dikembalikan' : 'Dipinjam';
 
         return [
             $rowNumber,
-            $peminjaman->siswa_id ? 'Siswa' : 'Guru',
-            $peminjam->nama,
-            $kelas,
+            $peminjaman->anggota->kode_anggota,
+            $peminjaman->anggota->nama,
+            $peminjaman->anggota->tipe,
+            $nisNip,
             $peminjaman->buku->judul,
             $peminjaman->buku->kategori->nama,
-            $peminjaman->tanggal_pinjam,
-            $peminjaman->tanggal_kembali ?? '-',
+            $peminjaman->tanggal_peminjaman,
+            $peminjaman->tanggal_pengembalian,
             $status
         ];
     }

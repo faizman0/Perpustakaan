@@ -12,11 +12,10 @@ class Peminjaman extends Model
     protected $table = 'peminjamen';
 
     protected $fillable = [
-        'siswa_id',
-        'guru_id',
+        'anggota_id',
         'buku_id',
         'tanggal_pinjam',
-        'tanggal_kembali'
+        'tanggal_kembali',
     ];
 
     protected $casts = [
@@ -24,14 +23,9 @@ class Peminjaman extends Model
         'tanggal_kembali' => 'datetime',
     ];
 
-    public function siswa()
+    public function anggota()
     {
-        return $this->belongsTo(Siswa::class);
-    }
-
-    public function guru()
-    {
-        return $this->belongsTo(Guru::class);
+        return $this->belongsTo(Anggota::class);
     }
 
     public function buku()
@@ -42,5 +36,23 @@ class Peminjaman extends Model
     public function pengembalian()
     {
         return $this->hasOne(Pengembalian::class);
+    }
+
+    public function getStatusAttribute()
+    {
+        if ($this->pengembalian) {
+            return '<span class="badge bg-success">Dikembalikan</span>';
+        }
+
+        $jatuhTempo = null;
+        if ($this->tanggal_pinjam) {
+            $jatuhTempo = \Carbon\Carbon::parse($this->tanggal_pinjam)->addDays(14);
+            $now = \Carbon\Carbon::now();
+            if ($now->gt($jatuhTempo)) {
+                return '<span class="badge bg-danger">Terlambat</span>';
+            }
+        }
+        
+        return '<span class="badge bg-warning">Dipinjam</span>';
     }
 }

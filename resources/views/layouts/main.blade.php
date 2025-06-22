@@ -15,16 +15,22 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <!-- Custom styles -->
   <style>
+    .radio {
+    width: 50px;
+    height: 20px;
+
+    }
+
     .btn {
       transition: all 0.2s ease;
     }
     .btn:hover {
       transform: scale(1.05);
     }
-    .nav-link {
+    .nav-link:not(.dropdown-toggle) {
       position: relative;
     }
-    .nav-link:after {
+    .nav-link:not(.dropdown-toggle)::after {
       content: '';
       position: absolute;
       width: 0;
@@ -34,7 +40,7 @@
       background-color: #007bff;
       transition: width 0.4s ease;
     }
-    .nav-link:hover:after {
+    .nav-link:not(.dropdown-toggle):hover::after {
       width: 100%;
     }
     .table {
@@ -50,22 +56,22 @@
   <!-- Theme style -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
   <!-- DataTables -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap 4 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <!-- Bootstrap 5 JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Bootstrap 4 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- DataTables -->
   <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="hold-transition sidebar-mini">
+<body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
 
   <!-- Navbar -->
@@ -78,31 +84,64 @@
     </ul>
 
     <!-- Right navbar links -->
-    <ul class="navbar-nav ms-auto ">
+    <ul class="navbar-nav ml-auto">
       @auth
+      <!-- Notifications Dropdown Menu -->
+      @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('petugas'))
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#">
+          <i class="fas fa-bell fa-lg"></i>
+          @if(isset($peminjamanTerlambat) && $peminjamanTerlambat->count() > 0)
+          <span class="badge badge-warning navbar-badge">{{ $peminjamanTerlambat->count() }}</span>
+          @endif
+        </a>
+        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+          @if(isset($peminjamanTerlambat) && $peminjamanTerlambat->count() > 0)
+          <span class="dropdown-item dropdown-header">{{ $peminjamanTerlambat->count() }} Peminjaman Terlambat</span>
+          <div class="dropdown-divider"></div>
+          @foreach($peminjamanTerlambat as $peminjaman)
+          <a href="{{ (auth()->user()->hasRole('admin') ? route('admin.pengembalian.index') : route('petugas.pengembalian.index')) . '#aktif' }}" class="dropdown-item">
+            <div class="d-flex">
+              <div class="flex-grow-1">
+                <strong>{{ $peminjaman->buku->judul }}</strong><br>
+                <small>Peminjam: {{ $peminjaman->anggota->nama }}</small>
+              </div>
+              <div class="ml-2 text-right">
+                @php
+                    $terlambat = \Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->addDays(14));
+                @endphp
+                <span class="badge badge-danger">{{ $terlambat }} hari</span>
+              </div>
+            </div>
+          </a>
+          <div class="dropdown-divider"></div>
+          @endforeach
+          <a href="{{ (auth()->user()->hasRole('admin') ? route('admin.pengembalian.index') : route('petugas.pengembalian.index')) . '#aktif' }}" class="dropdown-item dropdown-footer">Lihat Semua Peminjaman</a>
+          @else
+          <span class="dropdown-item dropdown-header">Tidak ada peminjaman terlambat</span>
+          @endif
+        </div>
+      </li>
+      @endif
+
       <!-- User Dropdown Menu -->
       <li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    <i class="fas fa-user"></i> {{ Auth::user()->name }}
-  </a>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarUserDropdown">
-    <li>
-      <a href="/edituser" class="dropdown-item">
-        <i class="fas fa-key me-2"></i> Change Password
-      </a>
-    </li>
-    <li><hr class="dropdown-divider"></li>
-    <li>
-      <form action="{{ route('logout') }}" method="POST" class="d-inline">
-        @csrf
-        <button type="submit" class="dropdown-item">
-          <i class="fas fa-sign-out-alt me-2"></i> Logout
-        </button>
-      </form>
-    </li>
-  </ul>
-</li>
-
+        <a class="nav-link dropdown-toggle" href="#" id="navbarUserDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fas fa-user"></i> {{ Auth::user()->name }}
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarUserDropdown">
+          <a href="{{ route('users.edit-password') }}" class="dropdown-item">
+            <i class="fas fa-key me-2"></i> Ubah Password
+          </a>
+          <div class="dropdown-divider"></div>
+          <form action="{{ route('logout') }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="dropdown-item">
+              <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </button>
+          </form>
+        </div>
+      </li>
       @else
       <li class="nav-item">
         <a href="{{ route('login') }}" class="nav-link">
@@ -117,8 +156,12 @@
   <!-- Main Sidebar Container -->
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="/dashboard" class="brand-link">
-      <span class="brand-text font-weight-light-bold">Perpustakaan Sumber Ilmu</span>
+    <a href="/dashboard" style="text-decoration: none;" class="brand-link d-sm-flex align-items-center justify-content-center p-2">
+      <img src="{{ asset('img/logoSD.png') }}" alt="Logo Perpustakaan" class="brand-image img-circle elevation-3" style="width: 45px; height: 45px; margin-right: 10px;">
+      <span class="brand-text font-weight-bold" style="font-size: 1.2rem; letter-spacing: 0.5px;">
+        Perpustakaan<br>
+        <small style="font-size: 0.9rem; opacity: 0.8;">Sumber Ilmu</small>
+      </span>
     </a>
 
     <!-- Sidebar -->
@@ -133,72 +176,84 @@
               <p>Dashboard</p>
             </a>
           </li>
-          
           @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('petugas'))
-          <li class="nav-item">
-            <a href="{{ auth()->user()->hasRole('admin') ? route('admin.guru.index') : route('petugas.guru.index') }}" class="nav-link {{ $key == 'guru' ? 'active' : '' }}">
-              <i class="nav-icon fas fa-user-tie"></i>
-              <p>Guru</p>
-            </a>
-          </li>
-
-          <li class="nav-item has-treeview {{ in_array($key, ['kelas', 'siswa']) ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ in_array($key, ['kelas', 'siswa']) ? 'active' : '' }}">
-              <i class="nav-icon fas fa-users"></i>
+          <li class="nav-item has-treeview {{ in_array($key, ['kategori', 'buku']) ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ in_array($key, ['kategori', 'buku']) ? 'active' : '' }}">
+              <i class="nav-icon fas fa-book-open"></i>
               <p>
-                Data Siswa
+                Koleksi Buku
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
             <ul class="nav nav-treeview" style="margin-left: 1rem;">
               @if(auth()->user()->hasRole('admin'))
               <li class="nav-item">
-                <a href="{{ route('admin.kelas.index') }}" class="nav-link {{ $key == 'kelas' ? 'active' : '' }}">
-                  <i class="fas fa-school nav-icon"></i>
-                  <p>Kelas</p>
-                </a>
-              </li>
-              @endif
-              <li class="nav-item">
-                <a href="{{ auth()->user()->hasRole('admin') ? route('admin.siswa.index') : route('petugas.siswa.index') }}" class="nav-link {{ $key == 'siswa' ? 'active' : '' }}">
-                  <i class="fas fa-user-graduate nav-icon"></i>
-                  <p>Siswa</p>
-                </a>
-              </li>
-            </ul>
-          </li>
-
-          <li class="nav-item has-treeview {{ in_array($key, ['kategori', 'buku']) ? 'menu-open' : '' }}">
-            <a href="#" class="nav-link {{ in_array($key, ['kategori', 'buku']) ? 'active' : '' }}">
-              <i class="nav-icon fas fa-book"></i>
-              <p>
-                Data Buku
-                <i class="right fas fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview" style="margin-left: 1rem;">
-              <li class="nav-item">
                 <a href="{{ route('admin.kategori.index') }}" class="nav-link {{ $key == 'kategori' ? 'active' : '' }}">
                   <i class="fas fa-tags nav-icon"></i>
                   <p>Kategori Buku</p>
                 </a>
               </li>
+              @endif
               <li class="nav-item">
-                <a href="{{ route('admin.buku.index') }}" class="nav-link {{ $key == 'buku' ? 'active' : '' }}">
+                <a href="{{ auth()->user()->hasRole('admin') ? route('admin.buku.index') : route('petugas.buku.index') }}" class="nav-link {{ $key == 'buku' ? 'active' : '' }}">
                   <i class="fas fa-book nav-icon"></i>
-                  <p>Buku</p>
+                  <p>Data Buku</p>
                 </a>
               </li>
             </ul>
           </li>
-
-          <li class="nav-item">
-            <a href="{{ route('admin.users.index') }}" class="nav-link {{ $key == 'users' ? 'active' : '' }}">
-              <i class="nav-icon fas fa-users-cog"></i>
-              <p>Manajemen User</p>
-            </a>
-          </li>
+          
           @endif
+
+          
+          <li class="nav-item has-treeview {{ in_array($key, ['anggota', 'guru', 'kelas', 'siswa']) ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ in_array($key, ['anggota', 'guru', 'kelas', 'siswa']) ? 'active' : '' }}">
+                <i class="nav-icon fas fa-id-card"></i>
+                <p>
+                    Anggota
+                    <i class="right fas fa-angle-left"></i>
+                </p>
+            </a>
+            <ul class="nav nav-treeview" style="margin-left: 1rem;">
+                <li class="nav-item">
+                    <a href="{{ auth()->user()->hasRole('admin') ? route('admin.anggota.index') : route('petugas.anggota.index') }}" class="nav-link {{ $key == 'anggota' ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-id-card"></i>
+                        <p>Data Anggota</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ auth()->user()->hasRole('admin') ? route('admin.guru.index') : route('petugas.guru.index') }}" class="nav-link {{ $key == 'guru' ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-tie"></i>
+                        <p>Guru</p>
+                    </a>
+                </li>
+                <li class="nav-item has-treeview {{ in_array($key, ['kelas', 'siswa']) ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ in_array($key, ['kelas', 'siswa']) ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>
+                            Data Siswa
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview" style="margin-left: 1rem;">
+                        @if(auth()->user()->hasRole('admin'))
+                        <li class="nav-item">
+                            <a href="{{ route('admin.kelas.index') }}" class="nav-link {{ $key == 'kelas' ? 'active' : '' }}">
+                                <i class="fas fa-school nav-icon"></i>
+                                <p>Kelas</p>
+                            </a>
+                        </li>
+                        @endif
+                        <li class="nav-item">
+                            <a href="{{ auth()->user()->hasRole('admin') ? route('admin.siswa.index') : route('petugas.siswa.index') }}" class="nav-link {{ $key == 'siswa' ? 'active' : '' }}">
+                                <i class="fas fa-user-graduate nav-icon"></i>
+                                <p>Siswa</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+          </li>
 
           <li class="nav-item has-treeview {{ in_array($key, ['kunjungan','peminjaman', 'pengembalian']) ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ in_array($key, ['kunjungan','peminjaman', 'pengembalian']) ? 'active' : '' }}">
@@ -271,7 +326,9 @@
       <div class="container-fluid">
         @if (session('success'))
           <div class="alert alert-success alert-dismissible fade show">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
             <h5><i class="icon fas fa-check"></i> Success!</h5>
             {{ session('success') }}
           </div>
@@ -359,9 +416,25 @@
          '#tabelPeminjamanBuku',
          '#tabelPengembalian',
          '#tabelPeminjamanGuru',
-          '#tabelPeminjamanSiswa'].forEach(function(tableId) {
+          '#tabelPeminjamanSiswa',
+          '#tabelAnggota'].forEach(function(tableId) {
       if ($(tableId).length) {
         $(tableId).DataTable();
+      }
+    });
+
+    // Password toggle functionality
+    $('.toggle-password').on('click', function() {
+      const targetId = $(this).data('target');
+      const input = $('#' + targetId);
+      const icon = $(this).find('i');
+      
+      if (input.attr('type') === 'password') {
+        input.attr('type', 'text');
+        icon.removeClass('fa-eye').addClass('fa-eye-slash');
+      } else {
+        input.attr('type', 'password');
+        icon.removeClass('fa-eye-slash').addClass('fa-eye');
       }
     });
   });

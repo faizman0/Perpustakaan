@@ -4,51 +4,54 @@
 
 @section('content')
 <div class="container-fluid">
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> {{ session('success') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    @endif
+
+    @if(session('warning'))
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> {{ session('warning') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-times-circle"></i> {{ session('error') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    @endif
+
+    <div class="row mb-3">
+        <div class="col-12">
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('create-guru'))
+            <a href="{{ route('admin.guru.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tambah Guru
+            </a>
+            @endif
+            @if(auth()->user()->hasRole('admin'))
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#importModal">
+                <i class="fas fa-file-import"></i> Import
+            </button>
+            @endif
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Data Guru</h3>
-            <div class="card-tools">
-                <div class="btn-group">
-                    <a href="{{ auth()->user()->hasRole('admin') ? '/admin/guru/create' : '/petugas/guru/create' }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> Tambah Guru
-                    </a>
-                    @if(auth()->user()->hasRole('admin'))
-                    <a href="{{ route('admin.guru.export.excel') }}" class="btn btn-success btn-sm ms-2">
-                        <i class="fas fa-file-excel"></i> Export Excel
-                    </a>
-                    <a href="{{ route('admin.guru.export.pdf') }}" class="btn btn-danger btn-sm ms-2">
-                        <i class="fas fa-file-pdf"></i> Export PDF
-                    </a>
-                    <button type="button" class="btn btn-info btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#importModal">
-                        <i class="fas fa-file-import"></i> Import
-                    </button>
-                    @endif
-                </div>
-            </div>
         </div>
         <!-- /.card-header -->
         <div class="card-body">
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('warning'))
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    {!! nl2br(e(session('warning'))) !!}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
             <table class="table table-bordered table-striped datatable" id="tabelGuru">
                 <thead>
                     <tr>
@@ -56,28 +59,41 @@
                         <th>Nama</th>
                         <th>NIP</th>
                         <th>Jenis Kelamin</th>
-                        <th width="20%">Aksi</th>
+                        <th width="20%" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($gurus as $index => $guru)
+                    @foreach ($gurus as $guru)
                         <tr>
-                            <td>{{ $index + 1 }}</td>
+                            <td>{{ $loop->iteration }}</td>
                             <td>{{ $guru->nama }}</td>
                             <td>{{ $guru->nip }}</td>
                             <td>{{ $guru->jenis_kelamin }}</td>
                             <td class="text-center">
-                            <a href="{{ auth()->user()->hasRole('admin') ? url('/admin/guru/'.$guru->id.'/edit') : url('/petugas/guru/'.$guru->id.'/edit') }}" class="btn btn-warning btn-sm">                                    <i class="fas fa-edit"></i> Edit
-                                </a>
-                                @if(auth()->user()->hasRole('admin'))
-                                <form action="{{ route('admin.guru.destroy', $guru->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm">
-                                        <i class="fas fa-trash"></i> Hapus
-                                    </button>
-                                </form>
-                                @endif
+                                <div class="btn-group">
+                                    @if(!$guru->anggota)
+                                        <form action="{{ auth()->user()->hasRole('admin') ? route('admin.anggota.store') : route('petugas.anggota.store') }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="tipe" value="Guru">
+                                            <input type="hidden" name="id" value="{{ $guru->id }}">
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="fas fa-user-plus"></i> Jadikan Anggota
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ auth()->user()->hasRole('admin') ? route('admin.guru.edit', $guru->id) : route('petugas.guru.edit', $guru->id) }}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    @if(auth()->user()->hasRole('admin'))
+                                    <form action="{{ route('admin.guru.destroy', $guru->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data guru ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </button>
+                                    </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -96,7 +112,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="importModalLabel">Import Data Guru</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <form action="{{ route('admin.guru.import.excel') }}" method="POST" enctype="multipart/form-data">
                 @csrf
@@ -126,7 +144,7 @@
                     </div>
                 </div>      
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-upload"></i> Import Data
                     </button>
@@ -137,11 +155,6 @@
 </div>
 @endif
 
-<!-- Form Hapus tersembunyi -->
-<form id="deleteForm" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
 @endsection
 
 @push('scripts')

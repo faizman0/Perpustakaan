@@ -14,7 +14,7 @@ class BukuTemplateExport implements WithHeadings, WithStyles, WithColumnWidths, 
     public function headings(): array
     {
         return [
-            'Kategori (Nama Kategori)',
+            'Kategori',
             'Judul',
             'No. Inventaris',
             'No. Klasifikasi',

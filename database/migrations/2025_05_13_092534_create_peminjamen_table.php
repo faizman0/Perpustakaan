@@ -13,11 +13,10 @@ return new class extends Migration
     {
         Schema::create('peminjamen', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('siswa_id')->nullable()->constrained('siswas')->onDelete('cascade');
-            $table->foreignId('guru_id')->nullable()->constrained('gurus')->onDelete('cascade');
+            $table->foreignId('anggota_id')->nullable()->constrained('anggotas')->onDelete('cascade')->after('id');
             $table->foreignId('buku_id')->constrained('bukus')->onDelete('cascade');
-            $table->date('tanggal_pinjam');
-            $table->date('tanggal_kembali')->nullable();
+            $table->dateTime('tanggal_pinjam');
+            $table->dateTime('tanggal_kembali')->nullable();
             $table->timestamps();
         });
     }

@@ -122,7 +122,7 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, WithBatchI
     {
         return [
             '*.nama' => 'required|string|max:255|regex:/^[\p{L}\s]+$/u',
-            '*.nis' => 'required|string|max:20|regex:/^[0-9]+$/',
+            '*.nis' => 'required|numeric',
             '*.jenis_kelamin' => 'required|in:Laki-laki,Perempuan,L,P',
             '*.kelas' => 'required|string|max:50',
         ];
@@ -134,7 +134,7 @@ class SiswaImport implements ToModel, WithHeadingRow, WithValidation, WithBatchI
             '*.nama.required' => 'Kolom nama wajib diisi',
             '*.nama.regex' => 'Nama hanya boleh berisi huruf dan spasi',
             '*.nis.required' => 'Kolom NIS wajib diisi',
-            '*.nis.regex' => 'NIS hanya boleh berisi angka',
+            '*.nis.numeric' => 'Kolom NIS harus berupa angka',
             '*.jenis_kelamin.required' => 'Kolom jenis kelamin wajib diisi',
             '*.jenis_kelamin.in' => 'Jenis kelamin harus Laki-laki, Perempuan, L, atau P',
             '*.kelas.required' => 'Kolom kelas wajib diisi',

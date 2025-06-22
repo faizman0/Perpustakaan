@@ -12,8 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('peminjaman_id')->constrained('peminjamen')
             ->onDelete('cascade')->onUpdate('cascade');
-            $table->date('tanggal_kembali');
-            $table->text('keterangan')->nullable();
+            $table->dateTime('tanggal_kembali');
             $table->timestamps();
         });
     }

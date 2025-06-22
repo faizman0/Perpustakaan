@@ -15,23 +15,23 @@ class PageController extends Controller
     public function index()
     {
         // Data untuk dashboard
-        $totalBuku = Buku::count();
-        $totalSiswa = Siswa::count();
-        $totalPeminjaman = Peminjaman::from('peminjamen')->count(); // Changed table name to peminjamen
-        $totalKunjungan = Kunjungan::count();
+        // $totalBuku = Buku::count();
+        // $totalSiswa = Siswa::count();
+        // $totalPeminjaman = Peminjaman::from('peminjamen')->count(); // Changed table name to peminjamen
+        // $totalKunjungan = Kunjungan::count();
         $today = Carbon::today();
 
         // Data untuk grafik atau statistik
-        $peminjamanTerbaru = Peminjaman::from('peminjamen') // Changed table name
-            ->with(['siswa', 'buku'])
-            ->latest()
-            ->take(5)
-            ->get();
+        // $peminjamanTerbaru = Peminjaman::from('peminjamen') // Changed table name
+        //     ->with(['siswa', 'buku'])
+        //     ->latest()
+        //     ->take(5)
+        //     ->get();
 
-        $kunjunganTerbaru = Kunjungan::with('siswa')
-            ->latest()
-            ->take(5)
-            ->get();
+        // $kunjunganTerbaru = Kunjungan::with('siswa')
+        //     ->latest()
+        //     ->take(5)
+        //     ->get();
 
         return view('dashboard.index', [
             'totalKunjunganHariIni' => Kunjungan::whereDate('tanggal_kunjungan', $today)->count(),

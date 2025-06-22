@@ -10,34 +10,9 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class GuruTemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithColumnFormatting
+class GuruTemplateExport implements WithHeadings, WithStyles, ShouldAutoSize
 {
-    public function array(): array
-    {
-        // Contoh data
-        return [
-            [
-                'Putra',
-                '22345',
-                'Laki-laki'
-            ],
-            [
-                'Putri',
-                '12345',
-                'Perempuan'
-            ],
-            [
-                'Muhammad Putra',
-                '3345',
-                'L'
-            ],
-            [
-                'Putri Ayu',
-                '44456',
-                'P'
-            ]
-        ];
-    }
+    
 
     public function headings(): array
     {
@@ -63,20 +38,7 @@ class GuruTemplateExport implements FromArray, WithHeadings, WithStyles, ShouldA
                     ],
                 ],
             ],
-            'A2:C3' => [
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    ],
-                ],
-            ],
         ];
     }
 
-    public function columnFormats(): array
-    {
-        return [
-            'B' => NumberFormat::FORMAT_TEXT, // Format NIP sebagai text
-        ];
-    }
 } 

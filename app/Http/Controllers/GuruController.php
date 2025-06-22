@@ -33,7 +33,7 @@ class GuruController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255|regex:/^[\p{L}\s]+$/u',
-            'nip' => 'required|string|max:20|regex:/^[0-9]+$/|unique:gurus',
+            'nip' => 'required|max:20|unique:gurus',
             'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
         ], [
             'nama.regex' => 'Nama hanya boleh berisi huruf dan spasi',
@@ -58,7 +58,7 @@ class GuruController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255|regex:/^[\p{L}\s]+$/u',
-            'nip' => 'required|string|max:20|regex:/^[0-9]+$/|unique:gurus,nip,' . $guru->id,
+            'nip' => 'required|max:20|unique:gurus,nip,' . $guru->id,
             'jenis_kelamin'=> 'required|in:Laki-laki,Perempuan',
         ], [
             'nama.regex' => 'Nama hanya boleh berisi huruf dan spasi',
@@ -67,31 +67,24 @@ class GuruController extends Controller
         ]);
 
         $guru->update($request->all());
-        return redirect(auth()->user()->hasRole('admin') ? route('admin.guru.store') : route('petugas.guru.store'))->with('success', 'Guru berhasil ditambahkan.');
+        return redirect(auth()->user()->hasRole('admin') ? route('admin.guru.store') : route('petugas.guru.store'))->with('success', 'Guru berhasil diedit.');
     }
 
     public function destroy(Guru $guru)
     {
         $guru->delete();
-        return redirect(auth()->user()->hasRole('admin') ? '/admin/guru' : '/petugas/guru')->with('success', 'Guru berhasil ditambahkan.');
+        return redirect(auth()->user()->hasRole('admin') ? '/admin/guru' : '/petugas/guru')->with('success', 'Guru berhasil dihapus.');
     }
 
-    public function exportExcel()
-    {
-        return Excel::download(new GuruExports, 'guru.xlsx');
-    }
-
-    public function exportPDF()
-    {
-        $gurus = Guru::all();
-        $pdf = Pdf::loadView('guru.export_pdf', compact('gurus'));
-        return $pdf->download('gurus.pdf');
-    }
 
     public function importExcel(Request $request)
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls|max:2048' // Max 2MB
+        ], [
+            'file.required' => 'File Excel harus diunggah',
+            'file.mimes' => 'File harus berformat Excel (.xlsx atau .xls)',
+            'file.max' => 'Ukuran file maksimal 2MB'
         ]);
 
         try {
@@ -107,7 +100,14 @@ class GuruController extends Controller
             if ($errorCount > 0) {
                 $message .= "\nDetail error:";
                 foreach ($errors as $error) {
-                    $message .= "\nBaris {$error['row']}: {$error['message']}";
+                    $message .= "\nBaris {$error['row']}: ";
+                    if (isset($error['errors'])) {
+                        foreach ($error['errors'] as $field => $messages) {
+                            $message .= "\n   - {$field}: " . implode(', ', $messages);
+                        }
+                    } else {
+                        $message .= $error['message'];
+                    }
                 }
                 return back()->with('warning', $message);
             }
@@ -117,11 +117,19 @@ class GuruController extends Controller
             $failures = $e->failures();
             $message = "Validasi gagal:\n";
             foreach ($failures as $failure) {
-                $message .= "Baris {$failure->row()}: " . implode(', ', $failure->errors()) . "\n";
+                $message .= "Baris {$failure->row()}: ";
+                foreach ($failure->errors() as $error) {
+                    $message .= "\n   - " . $error;
+                }
             }
             return back()->with('error', $message);
+        } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
+            return back()->with('error', 'File Excel tidak valid atau rusak. Silakan periksa format file Anda.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+            if (str_contains($e->getMessage(), 'validateNumber')) {
+                return back()->with('error', 'Format data tidak sesuai. Pastikan kolom NIP hanya berisi angka.');
+            }
+            return back()->with('error', 'Terjadi kesalahan saat import. Silakan periksa format data Anda dan coba lagi.');
         }
     }
 

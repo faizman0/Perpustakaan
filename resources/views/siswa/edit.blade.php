@@ -12,7 +12,7 @@
                     </div>
 
                     <div class="card-body">
-                        <form action="{{ route('admin.siswa.update', $siswa->id) }}" method="POST">
+                        <form action="{{ auth()->user()->hasRole('admin') ? route('admin.siswa.update', $siswa->id) : route('petugas.siswa.update', $siswa->id) }}" method="POST">
                             @csrf   
                             @method('PUT')
 
@@ -63,7 +63,7 @@
                             </div>
 
                             <div class="d-flex justify-content-between">
-                                <a href="{{ route('admin.siswa.index') }}" class="btn btn-secondary">Kembali</a>
+                                <a href="{{ auth()->user()->hasRole('admin') ? route('admin.siswa.index') : route('petugas.siswa.index') }}" class="btn btn-secondary">Kembali</a>
                                 <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                             </div>
                         </form>

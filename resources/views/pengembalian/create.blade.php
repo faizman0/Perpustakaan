@@ -32,7 +32,9 @@
                         <thead>
                             <tr>
                                 <th width="5%">Pilih</th>
+                                <th>Kode Anggota</th>
                                 <th>Peminjam</th>
+                                <th>Tipe</th>
                                 <th>Buku</th>
                                 <th>Tanggal Pinjam</th>
                                 <th>Jatuh Tempo</th>
@@ -45,21 +47,36 @@
                                         <input type="radio" name="peminjaman_id" value="{{ $p->id }}" required>
                                     </td>
                                     <td>
-                                        @if($p->siswa_id)
-                                            {{ $p->siswa->nama }} ({{ $p->siswa->nis }})
-                                            <br>
-                                            <small class="text-muted">{{ $p->siswa->kelas->nama_kelas ?? '-' }}</small>
+                                        <span class="badge badge-primary">{{ $p->anggota->kode_anggota }}</span>
+                                    </td>
+                                    <td>
+                                        {{ $p->anggota->nama }}
+                                        <br>
+                                        <small class="text-muted">
+                                            @if($p->anggota->siswa)
+                                                {{ $p->anggota->siswa->nis }}
+                                            @elseif($p->anggota->guru)
+                                                {{ $p->anggota->guru->nip }}
+                                            @endif
+                                        </small>
+                                    </td>
+                                    <td>
+                                        @if($p->anggota->tipe == 'Siswa')
+                                            <span class="badge badge-success">Siswa</span>
+                                            @if($p->anggota->siswa)
+                                                <br><small class="text-muted">{{ $p->anggota->siswa->kelas->nama_kelas ?? '-' }}</small>
+                                            @endif
                                         @else
-                                            {{ $p->guru->nama }} ({{ $p->guru->nip }})
+                                            <span class="badge badge-info">Guru</span>
                                         @endif
                                     </td>
                                     <td>{{ $p->buku->judul }}</td>
                                     <td>{{ \Carbon\Carbon::parse($p->tanggal_pinjam)->format('d/m/Y') }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($p->tanggal_pinjam)->addDays(7)->format('d/m/Y') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($p->tanggal_pinjam)->addDays(14)->format('d/m/Y') }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center">Tidak ada data peminjaman yang perlu dikembalikan</td>
+                                    <td colspan="7" class="text-center">Tidak ada data peminjaman yang perlu dikembalikan</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -77,8 +94,14 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="tanggal_kembali" class="form-label">Tanggal Kembali</label>
-                            <input type="date" class="form-control" id="tanggal_kembali" name="tanggal_kembali" 
-                                   value="{{ date('Y-m-d') }}" required>
+                            <input type="datetime-local" class="form-control" id="tanggal_kembali" name="tanggal_kembali" value="{{ old('tanggal_kembali', now('Asia/Jakarta')->format('Y-m-d\TH:i')) }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="keterangan" class="form-label">Keterangan</label>
+                            <textarea class="form-control" id="keterangan" name="keterangan" rows="3" 
+                                      placeholder="Masukkan keterangan pengembalian"></textarea>
                         </div>
                     </div>
                 </div>

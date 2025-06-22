@@ -23,42 +23,32 @@ class PengembalianController extends Controller
     public function index()
     {
         $this->middleware('role:admin|petugas');
-        $pengembalianSiswa = Pengembalian::with(['peminjaman.siswa.kelas', 'peminjaman.buku.kategori'])
-            ->whereHas('peminjaman', function($query) {
-                $query->whereNotNull('siswa_id');
-            })
-            ->latest()
-            ->get();
-        
-        $pengembalianGuru = Pengembalian::with(['peminjaman.guru', 'peminjaman.buku.kategori'])
-            ->whereHas('peminjaman', function($query) {
-                $query->whereNotNull('guru_id');
-            })
-            ->latest()
-            ->get();
 
-        $peminjamanBelumKembali = Peminjaman::whereDoesntHave('pengembalian')
-            ->with(['buku', 'siswa.kelas', 'guru'])
-            ->get();
+        try {
+            $peminjamanBelumKembali = Peminjaman::whereDoesntHave('pengembalian')
+                ->with(['buku', 'anggota.siswa', 'anggota.guru'])
+                ->get();
 
-        $pengembalians = Pengembalian::with(['peminjaman.siswa.kelas', 'peminjaman.guru', 'peminjaman.buku.kategori'])
-            ->latest()
-            ->get();
-            
-        return view('pengembalian.index', [
-            'pengembalianSiswa' => $pengembalianSiswa,
-            'pengembalianGuru' => $pengembalianGuru,
-            'peminjamanBelumKembali' => $peminjamanBelumKembali,
-            'pengembalians' => $pengembalians,
-            'key' => 'pengembalian'
-        ]);
+            $pengembalians = Pengembalian::with(['peminjaman.anggota.siswa', 'peminjaman.anggota.guru', 'peminjaman.buku.kategori'])
+                ->latest()
+                ->get();
+
+            return view('pengembalian.index', [
+                'peminjamanBelumKembali' => $peminjamanBelumKembali,
+                'pengembalians' => $pengembalians,
+                'key' => 'pengembalian'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in PengembalianController@index: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengambil data pengembalian');
+        }
     }
 
     public function create()
     {
         $this->middleware('role:admin|petugas');
         $peminjaman = Peminjaman::whereDoesntHave('pengembalian')
-            ->with(['buku', 'siswa.kelas', 'guru'])
+            ->with(['buku', 'anggota.siswa', 'anggota.guru'])
             ->get();
         return view('pengembalian.create', [
             'peminjaman' => $peminjaman,
@@ -71,8 +61,7 @@ class PengembalianController extends Controller
         $this->middleware('role:admin|petugas');
         $request->validate([
             'peminjaman_id' => 'required|exists:peminjamen,id',
-            'tanggal_kembali' => 'required|date',
-            'keterangan' => 'nullable'
+            'tanggal_kembali' => 'required|date'
         ]);
 
         try {
@@ -90,8 +79,13 @@ class PengembalianController extends Controller
             $peminjaman->buku->increment('jumlah');
 
             // Buat pengembalian
-            $pengembalian = Pengembalian::create($request->all());
-
+            $validatedData = $request->validate([
+                'peminjaman_id' => 'required|exists:peminjamen,id',
+                'tanggal_kembali' => 'required|date'
+            ]);
+    
+            Pengembalian::create($validatedData);
+            
             DB::commit();
 
             // Redirect based on user role
@@ -116,7 +110,7 @@ class PengembalianController extends Controller
         $this->middleware('role:admin');
         $peminjaman = Peminjaman::whereDoesntHave('pengembalian')
             ->orWhere('id', $pengembalian->peminjaman_id)
-            ->with(['buku', 'siswa.kelas', 'guru'])
+            ->with(['buku', 'anggota.siswa', 'anggota.guru'])
             ->get();
         return view('pengembalian.edit', [
             'pengembalian' => $pengembalian,
@@ -130,8 +124,7 @@ class PengembalianController extends Controller
         $this->middleware('role:admin');
         $request->validate([
             'peminjaman_id' => 'required|exists:peminjaman,id',
-            'tanggal_kembali' => 'required|date',
-            'keterangan' => 'nullable'
+            'tanggal_kembali' => 'required|date'
         ]);
 
         try {
@@ -177,16 +170,21 @@ class PengembalianController extends Controller
         try {
             DB::beginTransaction();
 
-            // Kembalikan stok buku
+            // Temukan peminjaman terkait
             $peminjaman = Peminjaman::find($pengembalian->peminjaman_id);
-            $peminjaman->buku->increment('jumlah');
 
+            // Hapus pengembalian
             $pengembalian->delete();
+
+            // Hapus peminjaman jika ada
+            if ($peminjaman) {
+                $peminjaman->delete();
+            }
 
             DB::commit();
 
             return redirect()->back()
-                ->with('success', 'Data pengembalian berhasil dihapus');
+                ->with('success', 'Data pengembalian dan peminjaman terkait berhasil dihapus');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error in PengembalianController@destroy: ' . $e->getMessage());
@@ -195,48 +193,74 @@ class PengembalianController extends Controller
         }
     }
 
-    public function exportPdf()
+    public function exportPdf(Request $request)
     {
         $this->middleware('role:admin');
-        $pengembalianSiswa = Pengembalian::with(['peminjaman.siswa.kelas', 'peminjaman.buku.kategori'])
-            ->whereHas('peminjaman', function($query) {
-                $query->whereNotNull('siswa_id');
-            })
-            ->latest()
-            ->get();
         
-        $pengembalianGuru = Pengembalian::with(['peminjaman.guru', 'peminjaman.buku.kategori'])
-            ->whereHas('peminjaman', function($query) {
-                $query->whereNotNull('guru_id');
-            })
-            ->latest()
-            ->get();
+        try {
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
 
-        $pdf = PDF::loadView('pengembalian.pdf', [
-            'pengembalianSiswa' => $pengembalianSiswa,
-            'pengembalianGuru' => $pengembalianGuru
-        ]);
+            $query = Pengembalian::with(['peminjaman.anggota.siswa', 'peminjaman.anggota.guru', 'peminjaman.buku.kategori']);
+            
+            if ($startDate && $endDate) {
+                $query->whereBetween('tanggal_kembali', [$startDate, $endDate]);
+            }
 
-        return $pdf->download('laporan-pengembalian.pdf');
+            $pengembalians = $query->latest()->get();
+
+            // Get active loans for comparison
+            $peminjamanBelumKembali = Peminjaman::whereDoesntHave('pengembalian')
+                ->with(['buku', 'anggota.siswa', 'anggota.guru'])
+                ->get();
+
+            $pdf = PDF::loadView('pengembalian.pdf', [
+                'pengembalians' => $pengembalians,
+                'peminjamanBelumKembali' => $peminjamanBelumKembali,
+                'startDate' => $startDate,
+                'endDate' => $endDate
+            ]);
+
+            return $pdf->download('laporan-pengembalian.pdf');
+        } catch (\Exception $e) {
+            Log::error('Error in PengembalianController@exportPdf: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat export PDF');
+        }
     }
 
-    public function exportExcel()
+    public function exportExcel(Request $request)
     {
         $this->middleware('role:admin');
-        $pengembalianSiswa = Pengembalian::with(['peminjaman.siswa.kelas', 'peminjaman.buku.kategori'])
-            ->whereHas('peminjaman', function($query) {
-                $query->whereNotNull('siswa_id');
-            })
-            ->latest()
-            ->get();
         
-        $pengembalianGuru = Pengembalian::with(['peminjaman.guru', 'peminjaman.buku.kategori'])
-            ->whereHas('peminjaman', function($query) {
-                $query->whereNotNull('guru_id');
-            })
-            ->latest()
-            ->get();
+        try {
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
 
-        return Excel::download(new PengembalianExport($pengembalianSiswa, $pengembalianGuru), 'laporan-pengembalian.xlsx');
+            $query = Pengembalian::with(['peminjaman.anggota.siswa', 'peminjaman.anggota.guru', 'peminjaman.buku.kategori']);
+            
+            if ($startDate && $endDate) {
+                $query->whereBetween('tanggal_kembali', [$startDate, $endDate]);
+            }
+
+            $pengembalians = $query->latest()->get();
+
+            return Excel::download(new PengembalianExport($pengembalians), 'laporan-pengembalian.xlsx');
+        } catch (\Exception $e) {
+            Log::error('Error in PengembalianController@exportExcel: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat export Excel');
+        }
+    }
+
+    /**
+     * Export PDF untuk satu data pengembalian
+     */
+    public function exportSinglePdf($id)
+    {
+        $this->middleware('role:admin');
+        $pengembalian = Pengembalian::with(['peminjaman.anggota.siswa', 'peminjaman.anggota.guru', 'peminjaman.buku.kategori'])->findOrFail($id);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pengembalian.bukti', [
+            'pengembalian' => $pengembalian
+        ]);
+        return $pdf->download('bukti-pengembalian-'.$pengembalian->id.'.pdf');
     }
 }

@@ -13,6 +13,6 @@ class Kategori extends Model
 
     public function buku()
     {
-        return $this->hasMany(Buku::class)->onDelete('cascade');
+        return $this->hasMany(Buku::class);
     }
 }

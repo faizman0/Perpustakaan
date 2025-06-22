@@ -6,8 +6,10 @@ use App\Models\Kunjungan;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class KunjunganExports implements FromCollection, WithHeadings, WithMapping
+class KunjunganExports implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
     protected $startDate;
     protected $endDate;
@@ -23,7 +25,7 @@ class KunjunganExports implements FromCollection, WithHeadings, WithMapping
     */
     public function collection()
     {
-        $query = Kunjungan::with(['siswa.kelas', 'guru']);
+        $query = Kunjungan::with(['anggota.siswa', 'anggota.guru']);
 
         if ($this->startDate && $this->endDate) {
             $query->whereBetween('tanggal_kunjungan', [$this->startDate, $this->endDate]);
@@ -36,12 +38,37 @@ class KunjunganExports implements FromCollection, WithHeadings, WithMapping
     {
         return [
             'No',
-            'Tanggal Kunjungan',
+            'Kode Anggota',
+            'Nama',
+            'Tipe',
             'NIS/NIP',
-            'Nama Pengunjung',
-            'Tipe Pengunjung',
-            'Kelas/Bidang Studi',
+            'Tanggal Kunjungan',
             'Keterangan'
+        ];
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                ],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4F81BD']
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -50,25 +77,26 @@ class KunjunganExports implements FromCollection, WithHeadings, WithMapping
         static $index = 0;
         $index++;
 
-        if ($kunjungan->siswa_id) {
-            $nis = $kunjungan->siswa ? $kunjungan->siswa->nis : '-';
-            $nama = $kunjungan->siswa ? $kunjungan->siswa->nama : 'Data Siswa Tidak Ditemukan';
-            $tipe = 'Siswa';
-            $kelas = $kunjungan->siswa && $kunjungan->siswa->kelas ? $kunjungan->siswa->kelas->nama_kelas : '-';
-        } else {
-            $nis = $kunjungan->guru ? $kunjungan->guru->nip : '-';
-            $nama = $kunjungan->guru ? $kunjungan->guru->nama : 'Data Guru Tidak Ditemukan';
-            $tipe = 'Guru';
-            $kelas = $kunjungan->guru ? $kunjungan->guru->bidang_studi : '-';
+        $kodeAnggota = $kunjungan->anggota ? $kunjungan->anggota->kode_anggota : '-';
+        $nama = $kunjungan->anggota ? $kunjungan->anggota->nama : 'Data Anggota Tidak Ditemukan';
+        $tipe = $kunjungan->anggota ? $kunjungan->anggota->tipe : '-';
+        
+        $nisNip = '-';
+        if ($kunjungan->anggota) {
+            if ($kunjungan->anggota->siswa) {
+                $nisNip = $kunjungan->anggota->siswa->nis;
+            } elseif ($kunjungan->anggota->guru) {
+                $nisNip = $kunjungan->anggota->guru->nip;
+            }
         }
 
         return [
             $index,
-            $kunjungan->tanggal_kunjungan,
-            $nis,
+            $kodeAnggota,
             $nama,
             $tipe,
-            $kelas,
+            $nisNip,
+            $kunjungan->tanggal_kunjungan,
             $kunjungan->keterangan ?? '-'
         ];
     }

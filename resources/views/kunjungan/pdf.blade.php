@@ -47,48 +47,34 @@
     </div>
 
     <div class="section">
-        <div class="section-title">Kunjungan Siswa</div>
+        <div class="section-title">Daftar Kunjungan</div>
         <table>
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>Tanggal</th>
-                    <th>Nama Siswa</th>
-                    <th>Kelas</th>
+                    <th>Kode Anggota</th>
+                    <th>Nama</th>
+                    <th>Tipe</th>
+                    <th>NIS/NIP</th>
+                    <th>Tanggal Kunjungan</th>
                     <th>Keterangan</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($kunjunganSiswa as $index => $kunjungan)
+                @foreach($kunjungans as $index => $kunjungan)
                 <tr>
                     <td>{{ $index + 1 }}</td>
+                    <td>{{ $kunjungan->anggota->kode_anggota }}</td>
+                    <td>{{ $kunjungan->anggota->nama }}</td>
+                    <td>{{ $kunjungan->anggota->tipe }}</td>
+                    <td>
+                        @if($kunjungan->anggota->siswa)
+                            {{ $kunjungan->anggota->siswa->nis }}
+                        @elseif($kunjungan->anggota->guru)
+                            {{ $kunjungan->anggota->guru->nip }}
+                        @endif
+                    </td>
                     <td>{{ \Carbon\Carbon::parse($kunjungan->tanggal_kunjungan)->format('d/m/Y') }}</td>
-                    <td>{{ $kunjungan->siswa->nama }}</td>
-                    <td>{{ $kunjungan->siswa->kelas->nama_kelas }}</td>
-                    <td>{{ $kunjungan->keterangan ?? '-' }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Kunjungan Guru</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Tanggal</th>
-                    <th>Nama Guru</th>
-                    <th>Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($kunjunganGuru as $index => $kunjungan)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $kunjungan->tanggal_kunjungan }}</td>
-                    <td>{{ $kunjungan->guru->nama }}</td>
                     <td>{{ $kunjungan->keterangan ?? '-' }}</td>
                 </tr>
                 @endforeach
