@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Laporan Pengembalian Perpustakaan</title>
+    <title>Laporan Peminjaman dan Pengembalian Perpustakaan</title>
     <style>
         body { 
             font-family: Arial, sans-serif;
@@ -48,7 +48,8 @@
 </head>
 <body>
     <div class="header">
-        <h2>Laporan Pengembalian Perpustakaan</h2>
+        <h2>Laporan Peminjaman dan Pengembalian Perpustakaan</h2>
+        <h3>SD Negeri Banguntapan</h3>
         @if($startDate && $endDate)
             <p>Periode: {{ $startDate }} - {{ $endDate }}</p>
         @endif

@@ -37,7 +37,6 @@ class KunjunganExports implements FromCollection, WithHeadings, WithMapping, Wit
     public function headings(): array
     {
         return [
-            'No',
             'Kode Anggota',
             'Nama',
             'Tipe',
@@ -74,8 +73,6 @@ class KunjunganExports implements FromCollection, WithHeadings, WithMapping, Wit
 
     public function map($kunjungan): array
     {
-        static $index = 0;
-        $index++;
 
         $kodeAnggota = $kunjungan->anggota ? $kunjungan->anggota->kode_anggota : '-';
         $nama = $kunjungan->anggota ? $kunjungan->anggota->nama : 'Data Anggota Tidak Ditemukan';
@@ -91,7 +88,6 @@ class KunjunganExports implements FromCollection, WithHeadings, WithMapping, Wit
         }
 
         return [
-            $index,
             $kodeAnggota,
             $nama,
             $tipe,

@@ -4,32 +4,13 @@
 
 @section('content')
 <div class="container-fluid">
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle"></i> {{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-times-circle"></i> {{ session('error') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-
-  
-
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Data Anggota Perpustakaan</h3>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table id="tabelAnggota" class="table table-bordered table-striped datatable">
+                <table id="tabelAnggota" class="table table-bordered table-striped datatable" id="dataTable">
                     <thead>
                         <tr>
                             <th width="5%">No</th>

@@ -4,28 +4,11 @@
 
 @section('content')
 <div class="container-fluid">
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle"></i> {{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-times-circle"></i> {{ session('error') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-
     <!-- Tombol Tambah dan Export -->
     <div class="row mb-3">
         <div class="col-md-6">
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('create-kunjungan'))
-            <a href="{{ route('admin.kunjungan.create') }}" class="btn btn-primary">
+            <a href="{{ auth()->user()->hasRole('admin') ? route('admin.kunjungan.create') : route('petugas.kunjungan.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Tambah Kunjungan
             </a>
             @endif

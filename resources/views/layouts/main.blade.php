@@ -156,7 +156,7 @@
   <!-- Main Sidebar Container -->
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="/dashboard" style="text-decoration: none;" class="brand-link d-sm-flex align-items-center justify-content-center p-2">
+    <a href="/" style="text-decoration: none;" class="brand-link d-sm-flex align-items-center justify-content-center p-2">
       <img src="{{ asset('img/logoSD.png') }}" alt="Logo Perpustakaan" class="brand-image img-circle elevation-3" style="width: 45px; height: 45px; margin-right: 10px;">
       <span class="brand-text font-weight-bold" style="font-size: 1.2rem; letter-spacing: 0.5px;">
         Perpustakaan<br>
@@ -333,39 +333,31 @@
             {{ session('success') }}
           </div>
         @endif
-        
-        <!-- @if(auth()->check())
-            <div class="alert alert-info">
-                <h5>Debug Information:</h5>
-                <p>User: {{ auth()->user()->name }}</p>
-                <p>Email: {{ auth()->user()->email }}</p>
-                <p>Roles: 
-                    @foreach(auth()->user()->roles as $role)
-                        {{ $role->nama }} ({{ $role->slug }}),
-                    @endforeach
-                </p>
-                <p>Has Admin Role: {{ auth()->user()->hasRole('admin') ? 'Yes' : 'No' }}</p>
-                <p>Has Guru Permission: {{ auth()->user()->hasPermission('index-guru') ? 'Yes' : 'No' }}</p>
-            </div>
-        @endif -->
+        @if (session('warning'))
+          <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h5><i class="fas fa-exclamation-triangle"></i> Warning!</h5>
+            {{ session('warning') }}
+          </div>
+        @endif
+        @if (session('error'))
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h5><i class="fas fa-times-circle"></i> Error!</h5>
+            {{ session('error') }}
+          </div>
+        @endif
         
         @yield('content')
       </div><!-- /.container-fluid -->
     </section>
     <!-- /.content -->
   </div>
-  <!-- /.content-wrapper -->
-
-  <!-- Main Footer -->
-  <!-- <footer class="main-footer">
-    <strong>Copyright &copy; 2023 <a href="#">Perpustakaan SDN Banguntapan</a>.</strong>
-    All rights reserved.
-    <div class="float-right d-none d-sm-inline-block">
-      <b>Version</b> 1.0.0
-    </div>
-  </footer> -->
 </div>
-<!-- ./wrapper -->
 
 <!-- REQUIRED SCRIPTS -->
 <!-- jQuery -->

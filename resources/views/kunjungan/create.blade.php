@@ -107,8 +107,8 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="tanggal_kunjungan" class="form-label">Tanggal Kunjungan <span class="text-warning">*</span></label>
-                            <input type="datetime-local" class="form-control" id="tanggal_kunjungan" name="tanggal_kunjungan" value="{{ old('tanggal_kunjungan', now('Asia/Jakarta')->format('Y-m-d\TH:i')) }}" required>
-                            <div class="form-text">Tanggal dan waktu tidak boleh melebihi saat ini</div>
+                            <input type="datetime-local" class="form-control" id="tanggal_kunjungan_display" value="{{ old('tanggal_kunjungan', now('Asia/Jakarta')->format('Y-m-d\\TH:i')) }}" disabled>
+                            <input type="hidden" name="tanggal_kunjungan" value="{{ old('tanggal_kunjungan', now('Asia/Jakarta')->format('Y-m-d\\TH:i')) }}">
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -123,7 +123,7 @@
         </div>
 
         <!-- Tombol Aksi -->
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-between mb-4 mt-4">
             <a href="{{ auth()->user()->hasRole('admin') ? route('admin.kunjungan.index') : route('petugas.kunjungan.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>

@@ -18,7 +18,7 @@ use App\Http\Controllers\AnggotaController;
 use App\Http\Controllers\LandingPageController;
 
 // Route yang bisa diakses tanpa login
-Route::get('/', [LandingPageController::class, 'index'])->name('home');
+Route::get('/', [PageController::class, 'index'])->name('home');
 Route::get('/dashboard', [PageController::class, 'index'])->middleware('auth')->name('dashboard');
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -135,19 +135,17 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/peminjaman/{peminjaman}', [PeminjamanController::class, 'destroy'])->name('admin.peminjaman.destroy');
         Route::get('/peminjaman/export/pdf', [PeminjamanController::class, 'exportPdf'])->name('admin.peminjaman.export.pdf');
         Route::get('/peminjaman/export/excel', [PeminjamanController::class, 'exportExcel'])->name('admin.peminjaman.export.excel');
-        Route::get('/peminjaman/{peminjaman}/export/pdf', [PeminjamanController::class, 'exportSinglePdf'])->name('admin.peminjaman.export.bukti.pdf');
         
         // Manajemen Pengembalian
         Route::get('/pengembalian', [PengembalianController::class, 'index'])->name('admin.pengembalian.index');
         Route::get('/pengembalian/create', [PengembalianController::class, 'create'])->name('admin.pengembalian.create');
         Route::post('/pengembalian', [PengembalianController::class, 'store'])->name('admin.pengembalian.store');
         Route::get('/pengembalian/{pengembalian}', [PengembalianController::class, 'show'])->name('admin.pengembalian.show');
-        Route::get('/pengembalian/{pengembalian}/edit', [PengembalianController::class, 'edit'])->name('admin.pengembalian.edit');
+        // Route::get('/pengembalian/{pengembalian}/edit', [PengembalianController::class, 'edit'])->name('admin.pengembalian.edit');
         Route::put('/pengembalian/{pengembalian}', [PengembalianController::class, 'update'])->name('admin.pengembalian.update');
         Route::delete('/pengembalian/{pengembalian}', [PengembalianController::class, 'destroy'])->name('admin.pengembalian.destroy');
         Route::get('/pengembalian/export/pdf', [PengembalianController::class, 'exportPdf'])->name('admin.pengembalian.export.pdf');
         Route::get('/pengembalian/export/excel', [PengembalianController::class, 'exportExcel'])->name('admin.pengembalian.export.excel');
-        Route::get('/pengembalian/{pengembalian}/export/pdf', [PengembalianController::class, 'exportSinglePdf'])->name('admin.pengembalian.export.bukti.pdf');
     });
 
     // Route khusus petugas

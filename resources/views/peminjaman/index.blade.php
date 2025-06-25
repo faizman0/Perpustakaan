@@ -4,27 +4,10 @@
 
 @section('content')
 <div class="container-fluid">
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle"></i> {{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-times-circle"></i> {{ session('error') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-
     <div class="row mb-3">
         <div class="col-12">
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('create-peminjaman'))
-                <a href="{{ route('admin.peminjaman.create') }}" class="btn btn-primary">
+                <a href="{{ auth()->user()->hasRole('admin') ? route('admin.peminjaman.create') : route('petugas.peminjaman.create') }}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Tambah Peminjaman
                 </a>
             @endif
@@ -48,7 +31,6 @@
                             <th>Judul Buku</th>
                             <th>Kategori</th>
                             <th>Tanggal Pinjam</th>
-                            <th>Tanggal Kembali</th>
                             <th>Status</th>
                             <th class="text-center">Aksi</th>
                         </tr>
@@ -78,7 +60,6 @@
                             <td>{{ $peminjaman->buku->judul }}</td>
                             <td>{{ $peminjaman->buku->kategori->nama }}</td>
                             <td>{{ \Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->format('d M Y') }}</td>
-                            <td>{{ $peminjaman->tanggal_kembali ? \Carbon\Carbon::parse($peminjaman->tanggal_kembali)->format('d M Y') : '-' }}</td>
                             <td>
                                 {!! $peminjaman->status !!}
                             </td>
@@ -98,9 +79,6 @@
                                             <i class="fas fa-trash"></i> Hapus
                                         </button>
                                     </form>
-                                    <a href="{{ route('admin.peminjaman.export.bukti.pdf', ['peminjaman' => $peminjaman->id]) }}" class="btn btn-danger btn-sm" title="Export Bukti PDF" target="_blank">
-                                        <i class="fas fa-file-pdf"></i> Bukti
-                                    </a>
                                     @endif
                                 </div>
                             </td>
@@ -197,11 +175,7 @@
                     <tr>
                         <td width="200">Tanggal Peminjaman</td>
                         <td>: {{ \Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->format('d M Y H:i') }}</td>
-                    </tr>
-                    <tr>
-                        <td width="200">Tanggal Pengembalian</td>
-                        <td>: {{ $peminjaman->tanggal_kembali ? \Carbon\Carbon::parse($peminjaman->tanggal_kembali)->format('d M Y H:i') : '-' }}</td>
-                    </tr>
+                    </tr>   
                     <tr>
                         <td width="200">Status</td>
                         <td>: {!! $peminjaman->status !!}</td>

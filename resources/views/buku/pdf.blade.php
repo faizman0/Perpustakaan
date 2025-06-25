@@ -64,7 +64,7 @@
 
     <div class="info">
         <p>Tanggal Cetak: {{ date('d-m-Y H:i:s') }}</p>
-        <p>Total Buku: {{ count($bukus) }} judul</p>
+        <p>Total Buku: {{ count($bukus) }}</p>
     </div>
 
     <table>
@@ -105,11 +105,5 @@
             @endforeach
         </tbody>
     </table>
-
-    <div class="signature">
-        <p>Kepala Perpustakaan,</p>
-        <div class="signature-line"></div>
-        <p>NIP. 123456789</p>
-    </div>
 </body>
 </html>

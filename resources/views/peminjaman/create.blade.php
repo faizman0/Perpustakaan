@@ -161,7 +161,8 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="tanggal_pinjam" class="form-label">Tanggal Peminjaman <span class="text-warning">*</span></label>
-                            <input type="datetime-local" class="form-control" id="tanggal_pinjam" name="tanggal_pinjam" value="{{ old('tanggal_pinjam', now('Asia/Jakarta')->format('Y-m-d\TH:i')) }}" required>
+                            <input type="datetime-local" class="form-control" id="tanggal_pinjam_display" value="{{ old('tanggal_pinjam', now('Asia/Jakarta')->format('Y-m-d\\TH:i')) }}" disabled>
+                            <input type="hidden" name="tanggal_pinjam" value="{{ old('tanggal_pinjam', now('Asia/Jakarta')->format('Y-m-d\\TH:i')) }}">
                         </div>
                     </div>
                     
@@ -171,7 +172,7 @@
         </div>
 
         <!-- Tombol Aksi -->
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-between mb-4">
             <a href="{{ auth()->user()->hasRole('admin') ? route('admin.peminjaman.index') : route('petugas.peminjaman.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>

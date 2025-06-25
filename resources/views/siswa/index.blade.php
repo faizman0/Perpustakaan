@@ -4,37 +4,10 @@
 
 @section('content')
 <div class="container-fluid">
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle"></i> {{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-
-    @if(session('warning'))
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-triangle"></i> {{ session('warning') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-times-circle"></i> {{ session('error') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-
     <div class="row mb-3">
         <div class="col-12">
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('create-siswa'))
-            <a href="{{ route('admin.siswa.create') }}" class="btn btn-primary">
+            <a href="{{ auth()->user()->hasRole('admin') ? route('admin.siswa.create') : route('petugas.siswa.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Tambah Siswa
             </a>
             @endif

@@ -97,50 +97,60 @@
                 <!-- Pilihan Buku -->
                 <div class="card mb-4">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Pilih Buku <span class="text-warning">*</span></h5>
+                        <h5 class="mb-0">Pilih Buku (Maksimal 3) <span class="text-warning">*</span></h5>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped" id="tabelBuku">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th width="5%">Pilih</th>
-                                        <th>Judul</th>
-                                        <th>Pengarang</th>
-                                        <th>Klasifikasi</th>
-                                        <th>Stok</th>
+                    <div class="card-body" style="height: 300px; overflow-y: auto;">
+                        <table class="table table-bordered align-middle" id="tabelBuku">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">Pilih</th>
+                                    <th>Judul</th>
+                                    <th>Pengarang</th>
+                                    <th>Klasifikasi</th>
+                                    <th>Stok</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $bukuDipinjam = isset($peminjaman->buku_id) ? [$peminjaman->buku_id] : (isset($peminjaman->bukus) ? $peminjaman->bukus->pluck('id')->toArray() : []);
+                                    $bukuDipinjam = old('buku_ids', $bukuDipinjam);
+                                @endphp
+                                @forelse ($bukus as $buku)
+                                    @if($buku->jumlah > 0 || (is_array($bukuDipinjam) && in_array($buku->id, $bukuDipinjam)))
+                                    <tr class="{{ $buku->jumlah < 1 && !in_array($buku->id, $bukuDipinjam) ? 'table-secondary' : '' }}"
+                                        @if($buku->jumlah >= 1 || in_array($buku->id, $bukuDipinjam))
+                                            onclick="document.getElementById('buku_{{ $buku->id }}').click()"
+                                            style="cursor: pointer;"
+                                        @endif>
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input buku-checkbox" type="checkbox"
+                                                    name="buku_ids[]" value="{{ $buku->id }}"
+                                                    id="buku_{{ $buku->id }}"
+                                                    {{ (is_array($bukuDipinjam) && in_array($buku->id, $bukuDipinjam)) ? 'checked' : '' }}
+                                                    {{ $buku->jumlah < 1 && !in_array($buku->id, $bukuDipinjam) ? 'disabled' : '' }}
+                                                    style="width: 35px; height: 35px; position: relative;"
+                                                    onclick="event.stopPropagation()">
+                                            </div>
+                                        </td>
+                                        <td><label for="buku_{{ $buku->id }}" style="cursor: pointer;">{{ $buku->judul }}</label></td>
+                                        <td>{{ $buku->pengarang }}</td>
+                                        <td>{{ $buku->no_klasifikasi }}</td>
+                                        <td class="{{ $buku->jumlah < 1 && !in_array($buku->id, $bukuDipinjam) ? 'text-danger' : 'text-success' }}">
+                                            {{ $buku->jumlah }}
+                                            @if($buku->jumlah < 1 && !in_array($buku->id, $bukuDipinjam))
+                                                <span class="badge bg-danger ms-2">Stok Habis</span>
+                                            @endif
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($bukus as $buku)
-                                        <tr class="{{ $buku->jumlah < 1 && $buku->id != $peminjaman->buku_id ? 'table-secondary' : '' }}">
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" 
-                                                           name="buku_id" value="{{ $buku->id }}" 
-                                                           id="buku_{{ $buku->id }}"
-                                                           {{ old('buku_id', $peminjaman->buku_id) == $buku->id ? 'checked' : '' }}
-                                                           {{ $buku->jumlah < 1 && $buku->id != $peminjaman->buku_id ? 'disabled' : '' }}>
-                                                </div>
-                                            </td>
-                                            <td><label for="buku_{{ $buku->id }}">{{ $buku->judul }}</label></td>
-                                            <td>{{ $buku->pengarang }}</td>
-                                            <td>{{ $buku->no_klasifikasi }}</td>
-                                            <td class="{{ $buku->jumlah < 1 && $buku->id != $peminjaman->buku_id ? 'text-danger' : 'text-success' }}">
-                                                {{ $buku->jumlah }}
-                                                @if($buku->jumlah < 1 && $buku->id != $peminjaman->buku_id)
-                                                    <span class="badge bg-danger ms-2">Stok Habis</span>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center">Tidak ada data buku</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
+                                    @endif
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center">Tidak ada data buku</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -153,23 +163,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="tanggal_peminjaman" class="form-label">Tanggal Peminjaman <span class="text-warning">*</span></label>
-                                    <input type="datetime-local" class="form-control" id="tanggal_peminjaman" name="tanggal_peminjaman" value="{{ old('tanggal_peminjaman', \Carbon\Carbon::parse($peminjaman->tanggal_peminjaman)->format('Y-m-d\TH:i')) }}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="tanggal_pengembalian" class="form-label">Tanggal Pengembalian <span class="text-warning">*</span></label>
-                                    <input type="datetime-local" class="form-control" id="tanggal_pengembalian" name="tanggal_pengembalian" value="{{ old('tanggal_pengembalian', \Carbon\Carbon::parse($peminjaman->tanggal_pengembalian)->format('Y-m-d\TH:i')) }}" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label for="keterangan" class="form-label">Keterangan</label>
-                                    <textarea class="form-control" id="keterangan" name="keterangan" rows="3" 
-                                              placeholder="Masukkan keterangan peminjaman">{{ old('keterangan', $peminjaman->keterangan) }}</textarea>
+                                    <label for="tanggal_pinjam" class="form-label">Tanggal Peminjaman <span class="text-warning">*</span></label>
+                                    <input type="datetime-local" class="form-control" id="tanggal_pinjam" name="tanggal_pinjam" value="{{ old('tanggal_pinjam', \Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->format('Y-m-d\\TH:i')) }}" required>
                                 </div>
                             </div>
                         </div>
@@ -213,30 +208,41 @@ $(document).ready(function() {
             }
         }
     });
-
+    // Inisialisasi DataTable untuk tabel buku
+    $('#tabelBuku').DataTable({
+        "responsive": true,
+        "language": {
+            "search": "Cari:",
+            "lengthMenu": "Tampilkan _MENU_ data per halaman",
+            "zeroRecords": "Data tidak ditemukan",
+            "info": "Menampilkan halaman _PAGE_ dari _PAGES_",
+            "infoEmpty": "Tidak ada data yang tersedia",
+            "infoFiltered": "(difilter dari _MAX_ total data)",
+            "paginate": {
+                "first": "Pertama",
+                "last": "Terakhir",
+                "next": "Selanjutnya",
+                "previous": "Sebelumnya"
+            }
+        }
+    });
     // Validasi form sebelum submit
     $('form').on('submit', function(e) {
         const selectedAnggota = $('input[name="anggota_id"]:checked').val();
-        const selectedBook = $('input[name="buku_id"]:checked').val();
-        
+        const selectedBooks = $('input[name="buku_ids[]"]:checked').length;
         if (!selectedAnggota) {
             e.preventDefault();
             alert('Silakan pilih anggota terlebih dahulu!');
             return false;
         }
-
-        if (!selectedBook) {
+        if (selectedBooks === 0) {
             e.preventDefault();
-            alert('Silakan pilih buku terlebih dahulu!');
+            alert('Silakan pilih minimal 1 buku!');
             return false;
         }
-
-        const tanggalPeminjaman = $('#tanggal_peminjaman').val();
-        const tanggalPengembalian = $('#tanggal_pengembalian').val();
-        
-        if (tanggalPengembalian <= tanggalPeminjaman) {
+        if (selectedBooks > 3) {
             e.preventDefault();
-            alert('Tanggal pengembalian harus lebih besar dari tanggal peminjaman!');
+            alert('Maksimal hanya bisa meminjam 3 buku!');
             return false;
         }
     });

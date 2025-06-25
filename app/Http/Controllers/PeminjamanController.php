@@ -55,7 +55,8 @@ class PeminjamanController extends Controller
             'buku_ids.*' => 'exists:bukus,id',
             'anggota_id' => 'required|exists:anggotas,id',
             'tanggal_pinjam' => 'required|date',
-            'tanggal_kembali' => 'nullable|date|after:tanggal_pinjam',
+        ], [
+            'buku_ids.max' => 'Maksimal hanya boleh memilih 3 buku.',
         ]);
 
         // Cek apakah anggota sudah meminjam buku yang sama dan belum dikembalikan
@@ -93,7 +94,6 @@ class PeminjamanController extends Controller
                 'buku_id' => $bukuId,
                 'anggota_id' => $request->anggota_id,
                 'tanggal_pinjam' => $request->tanggal_pinjam,
-                'tanggal_kembali' => $request->tanggal_kembali,
             ]);
         }
 
@@ -124,28 +124,39 @@ class PeminjamanController extends Controller
     {
         $this->middleware('role:admin');
         $request->validate([
-            'buku_id' => 'required|exists:bukus,id',
+            'buku_ids' => 'required|array|min:1|max:3',
+            'buku_ids.*' => 'exists:bukus,id',
             'anggota_id' => 'required|exists:anggotas,id',
             'tanggal_pinjam' => 'required|date',
-            'tanggal_kembali' => '|date|after:tanggal_pinjam',
-            'keterangan' => 'nullable'
         ]);
 
-        // Jika buku diubah, kembalikan stok buku lama dan kurangi stok buku baru
-        if ($peminjaman->buku_id != $request->buku_id) {
-            $bukuLama = Buku::find($peminjaman->buku_id);
-            $bukuLama->increment('jumlah');
+        // Ambil semua peminjaman lama untuk anggota & tanggal yang sama
+        $peminjamanLama = Peminjaman::where('anggota_id', $peminjaman->anggota_id)
+            ->where('tanggal_pinjam', $peminjaman->tanggal_pinjam)
+            ->get();
 
-            $bukuBaru = Buku::find($request->buku_id);
-            if ($bukuBaru->jumlah <= 0) {
-                return redirect()->back()
-                    ->with('error', 'Stok buku tidak tersedia')
-                    ->withInput();
+        // Kembalikan stok buku lama dan hapus peminjaman lama
+        foreach ($peminjamanLama as $old) {
+            $buku = Buku::find($old->buku_id);
+            if ($buku) {
+                $buku->increment('jumlah');
             }
-            $bukuBaru->decrement('jumlah');
+            $old->delete();
         }
 
-        $peminjaman->update($request->all());
+        // Kurangi stok buku baru & buat peminjaman baru
+        foreach ($request->buku_ids as $bukuId) {
+            $buku = Buku::findOrFail($bukuId);
+            if ($buku->jumlah <= 0) {
+                return redirect()->back()->with('error', 'Stok buku tidak tersedia')->withInput();
+            }
+            $buku->decrement('jumlah');
+            Peminjaman::create([
+                'buku_id' => $bukuId,
+                'anggota_id' => $request->anggota_id,
+                'tanggal_pinjam' => $request->tanggal_pinjam,
+            ]);
+        }
 
         return redirect()->route('admin.peminjaman.index')
             ->with('success', 'Data peminjaman berhasil diperbarui');
@@ -186,18 +197,5 @@ class PeminjamanController extends Controller
             ->get();
 
         return Excel::download(new PeminjamanExport($peminjamans), 'laporan-peminjaman.xlsx');
-    }
-
-    /**
-     * Export PDF untuk satu data peminjaman
-     */
-    public function exportSinglePdf($id)
-    {
-        $this->middleware('role:admin');
-        $peminjaman = Peminjaman::with(['anggota.siswa', 'anggota.guru', 'buku.kategori'])->findOrFail($id);
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('peminjaman.bukti', [
-            'peminjaman' => $peminjaman
-        ]);
-        return $pdf->download('bukti-peminjaman-'.$peminjaman->id.'.pdf');
     }
 }

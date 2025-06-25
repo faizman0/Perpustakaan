@@ -16,7 +16,7 @@ class Pengembalian extends Model
     ];
 
     protected $casts = [
-        'tanggal_kembali' => 'date'
+        'tanggal_kembali' => 'datetime'
     ];
 
     public function peminjaman()

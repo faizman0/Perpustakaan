@@ -13,8 +13,8 @@
                         <i class="fas fa-users fa-2x"></i>
                     </div>
                     <div>
-                        <h5 class="card-title mb-1">Total Siswa</h5>
-                        <h3 class="mb-0">{{ $totalSiswas }}</h3>
+                        <h5 class="card-title mb-1">Total Anggota</h5>
+                        <h3 class="mb-0">{{ $totalAnggota }}</h3>
                     </div>
                 </div>
             </div>
@@ -57,20 +57,6 @@
                     <div>
                         <h5 class="card-title mb-1">Peminjaman Hari Ini</h5>
                         <h3 class="mb-0">{{ $totalPeminjamanHariIni }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <div class="card shadow rounded-lg bg-danger text-white">
-                <div class="card-body d-flex align-items-center">
-                    <div class="mr-3">
-                        <i class="fas fa-book-open fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="card-title mb-1">Peminjaman Aktif</h5>
-                        <h3 class="mb-0">{{ $totalPeminjamanAktif }}</h3>
                     </div>
                 </div>
             </div>

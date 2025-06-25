@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Peminjaman;
 use App\Models\Kunjungan;
-use App\Models\Siswa;
+use App\Models\Anggota;
 use App\Models\Buku;
 use App\Models\Pengembalian;
 use Carbon\Carbon;
@@ -36,10 +36,10 @@ class PageController extends Controller
         return view('dashboard.index', [
             'totalKunjunganHariIni' => Kunjungan::whereDate('tanggal_kunjungan', $today)->count(),
             'totalPeminjamanHariIni' => Peminjaman::from('peminjamen')->whereDate('tanggal_pinjam', $today)->count(), // Changed table name
-            'totalPeminjamanAktif' => Peminjaman::from('peminjamen')->whereNull('tanggal_kembali')->count(), // Changed query
+            
             'totalKunjunganBulanIni' => Kunjungan::whereMonth('tanggal_kunjungan', now()->month)->count(),
             'totalPeminjamanBulanIni' => Peminjaman::from('peminjamen')->whereMonth('tanggal_pinjam', now()->month)->count(), // Changed table name
-            'totalSiswas' => Siswa::count(),
+            'totalAnggota' => Anggota::count(),
             'totalBukus' => Buku::count(),
             'key'=>'dashboard'
         ]);

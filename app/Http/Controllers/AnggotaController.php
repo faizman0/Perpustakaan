@@ -39,13 +39,11 @@ class AnggotaController extends Controller
     public function destroy(Anggota $anggota)
     {
         try {
-            // Cek apakah anggota masih memiliki kunjungan atau peminjaman aktif
-            $hasActiveRecords = $anggota->kunjungans()->exists() || 
-                               $anggota->peminjamen()->whereNull('tanggal_kembali')->exists();
+            // Hapus semua kunjungan terkait
+            $anggota->kunjungans()->delete();
 
-            if ($hasActiveRecords) {
-                return back()->withErrors(['error' => 'Anggota tidak dapat dihapus karena masih memiliki data kunjungan atau peminjaman aktif']);
-            }
+            // Hapus semua peminjaman terkait
+            $anggota->peminjamen()->delete();
 
             $anggota->delete();
 
@@ -57,22 +55,7 @@ class AnggotaController extends Controller
         }
     }
 
-    /**
-     * Search anggota by kode
-     */
-    public function search(Request $request)
-    {
-        $kode = $request->get('kode');
-        $anggota = Anggota::where('kode_anggota', $kode)
-                          ->with(['siswa', 'guru'])
-                          ->first();
-
-        if (!$anggota) {
-            return response()->json(['error' => 'Anggota tidak ditemukan'], 404);
-        }
-
-        return response()->json($anggota);
-    }
+    
 
     /**
      * Show the form for creating a new resource.

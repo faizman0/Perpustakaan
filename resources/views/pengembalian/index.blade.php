@@ -4,23 +4,6 @@
 
 @section('content')
 <div class="container-fluid">
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle"></i> {{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-times-circle"></i> {{ session('error') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-
     @if(auth()->user()->hasRole('admin'))
     <div class="row mb-3">
         <div class="col-12 text-right">
@@ -191,29 +174,25 @@
                                         </td>
                                         <td>{{ $p->peminjaman->buku->judul ?? '-' }}</td>
                                         <td>{{ $p->peminjaman->tanggal_pinjam ? \Carbon\Carbon::parse($p->peminjaman->tanggal_pinjam)->format('d/m/Y') : '-' }}</td>
-                                        <td>{{ $p->tanggal_kembali ? \Carbon\Carbon::parse($p->tanggal_kembali)->format('d/m/Y') : '-' }}</td>
+                                        <td>: {{ \Carbon\Carbon::parse($p->tanggal_kembali)->format('d M Y H:i') }}</td>
                                         <td>
                                             {!! $p->status_detail !!}
                                         </td>
                                         <td>
                                             <div class="btn-group">
+                                                <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#detailPengembalianModal{{ $p->id }}">
+                                                    <i class="fas fa-eye"></i> Detail
+                                                </button>
                                                 @if(auth()->user()->hasRole('admin'))
-                                                    <a href="{{ route('admin.pengembalian.edit', $p->id) }}" 
-                                                       class="btn btn-warning btn-sm">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </a>
                                                     <form action="{{ route('admin.pengembalian.destroy', $p->id) }}" 
                                                           method="POST" 
                                                           onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-danger btn-sm">
-                                                            <i class="fas fa-trash"></i> Hapus
+                                                            <i></i> Batalkan Pengembalian
                                                         </button>
                                                     </form>
-                                                    <a href="{{ route('admin.pengembalian.export.bukti.pdf', ['pengembalian' => $p->id]) }}" class="btn btn-danger btn-sm" title="Export Bukti PDF" target="_blank">
-                                                        <i class="fas fa-file-pdf"></i> Bukti
-                                                    </a>
                                                 @endif
                                             </div>
                                         </td>
@@ -243,7 +222,7 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form action="{{ route('admin.pengembalian.store') }}" method="POST">
+                <form action="{{ auth()->user()->hasRole('admin') ? route('admin.pengembalian.store') : route('petugas.pengembalian.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
                         <input type="hidden" name="peminjaman_id" value="{{ $p->id }}">
@@ -260,26 +239,9 @@
 
                         <div class="mb-3">
                             <label for="tanggal_kembali" class="form-label">Tanggal Pengembalian</label>
-                            <input type="date" class="form-control" id="tanggal_kembali" name="tanggal_kembali" value="{{ date('Y-m-d') }}" required>
+                            <input type="datetime-local" class="form-control" id="tanggal_kembali_display" value="{{ now('Asia/Jakarta')->format('Y-m-d\\TH:i') }}" disabled>
+                            <input type="hidden" name="tanggal_kembali" value="{{ now('Asia/Jakarta')->format('Y-m-d\\TH:i') }}">
                         </div>
-
-                        @php
-                            $jatuhTempo = \Carbon\Carbon::parse($p->tanggal_pinjam)->addDays(14);
-                            $denda = 0;
-                            if(now()->gt($jatuhTempo)) {
-                                $keterlambatan = now()->diffInDays($jatuhTempo);
-                                $denda = $keterlambatan * 1000; // Contoh denda Rp1.000 per hari
-                            }
-                        @endphp
-                        
-                        @if($denda > 0)
-                        <div class="alert alert-warning">
-                            <p class="mb-0"><strong>Denda Keterlambatan:</strong></p>
-                            <p class="mb-0">Terlambat: {{ now()->diffInDays($jatuhTempo) }} hari</p>
-                            <p class="mb-0">Denda: Rp {{ number_format($denda, 0, ',', '.') }}</p>
-                            <input type="hidden" name="denda" value="{{ $denda }}">
-                        </div>
-                        @endif
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
@@ -289,6 +251,111 @@
             </div>
         </div>
     </div>
+@endforeach
+
+<!-- Modal Detail Pengembalian -->
+@foreach($pengembalians as $p)
+<div class="modal fade" id="detailPengembalianModal{{ $p->id }}" tabindex="-1" aria-labelledby="detailPengembalianModalLabel{{ $p->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailPengembalianModalLabel{{ $p->id }}">Detail Pengembalian</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Informasi Anggota</h6>
+                        <table class="table table-bordered">
+                            <tr>
+                                <td>Kode Anggota</td>
+                                <td>: <span class="badge badge-primary">{{ $p->peminjaman->anggota->kode_anggota }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>Nama</td>
+                                <td>: {{ $p->peminjaman->anggota->nama }}</td>
+                            </tr>
+                            <tr>
+                                <td>Tipe</td>
+                                <td>: 
+                                    @if($p->peminjaman->anggota->tipe == 'Siswa')
+                                        <span class="badge badge-success">Siswa</span>
+                                    @else
+                                        <span class="badge badge-info">Guru</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>NIS/NIP</td>
+                                <td>: 
+                                    @if($p->peminjaman->anggota->siswa)
+                                        {{ $p->peminjaman->anggota->siswa->nis }}
+                                    @elseif($p->peminjaman->anggota->guru)
+                                        {{ $p->peminjaman->anggota->guru->nip }}
+                                    @endif
+                                </td>
+                            </tr>
+                            @if($p->peminjaman->anggota->siswa)
+                            <tr>
+                                <td>Kelas</td>
+                                <td>: {{ $p->peminjaman->anggota->siswa->kelas->nama_kelas ?? '-' }}</td>
+                            </tr>
+                            @endif
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Informasi Buku</h6>
+                        <table class="table table-bordered">
+                            <tr>
+                                <td>Judul</td>
+                                <td>: {{ $p->peminjaman->buku->judul }}</td>
+                            </tr>
+                            <tr>
+                                <td>Pengarang</td>
+                                <td>: {{ $p->peminjaman->buku->pengarang }}</td>
+                            </tr>
+                            <tr>
+                                <td>Kategori</td>
+                                <td>: {{ $p->peminjaman->buku->kategori->nama }}</td>
+                            </tr>
+                            <tr>
+                                <td>No. Klasifikasi</td>
+                                <td>: {{ $p->peminjaman->buku->no_klasifikasi }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <hr>
+                <h6 class="font-weight-bold">Informasi Pengembalian</h6>
+                <table class="table table-borderless">
+                    <tr>
+                        <td width="200">Tanggal Pinjam</td>
+                        <td>: {{ $p->peminjaman->tanggal_pinjam ? \Carbon\Carbon::parse($p->peminjaman->tanggal_pinjam)->format('d M Y H:i') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td width="200">Tanggal Kembali</td>
+                        <td>: {{ $p->tanggal_kembali ? \Carbon\Carbon::parse($p->tanggal_kembali)->format('d M Y H:i') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Status</td>
+                        <td>: {!! $p->status_detail !!}</td>
+                    </tr>
+                    @if($p->keterangan)
+                    <tr>
+                        <td>Keterangan</td>
+                        <td>: {{ $p->keterangan }}</td>
+                    </tr>
+                    @endif
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endforeach
 
 @endsection

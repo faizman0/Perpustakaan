@@ -59,7 +59,7 @@ class PengembalianController extends Controller
     public function store(Request $request)
     {
         $this->middleware('role:admin|petugas');
-        $request->validate([
+        $validatedData = $request->validate([
             'peminjaman_id' => 'required|exists:peminjamen,id',
             'tanggal_kembali' => 'required|date'
         ]);
@@ -79,11 +79,6 @@ class PengembalianController extends Controller
             $peminjaman->buku->increment('jumlah');
 
             // Buat pengembalian
-            $validatedData = $request->validate([
-                'peminjaman_id' => 'required|exists:peminjamen,id',
-                'tanggal_kembali' => 'required|date'
-            ]);
-    
             Pengembalian::create($validatedData);
             
             DB::commit();
@@ -105,64 +100,6 @@ class PengembalianController extends Controller
         }
     }
 
-    public function edit(Pengembalian $pengembalian)
-    {
-        $this->middleware('role:admin');
-        $peminjaman = Peminjaman::whereDoesntHave('pengembalian')
-            ->orWhere('id', $pengembalian->peminjaman_id)
-            ->with(['buku', 'anggota.siswa', 'anggota.guru'])
-            ->get();
-        return view('pengembalian.edit', [
-            'pengembalian' => $pengembalian,
-            'peminjaman' => $peminjaman,
-            'key' => 'pengembalian'
-        ]);
-    }
-
-    public function update(Request $request, Pengembalian $pengembalian)
-    {
-        $this->middleware('role:admin');
-        $request->validate([
-            'peminjaman_id' => 'required|exists:peminjaman,id',
-            'tanggal_kembali' => 'required|date'
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            // Jika peminjaman diubah
-            if ($pengembalian->peminjaman_id != $request->peminjaman_id) {
-                // Kembalikan stok buku lama
-                $peminjamanLama = Peminjaman::find($pengembalian->peminjaman_id);
-                $peminjamanLama->buku->increment('jumlah');
-
-                // Cek apakah peminjaman baru sudah dikembalikan
-                $peminjamanBaru = Peminjaman::find($request->peminjaman_id);
-                if ($peminjamanBaru->pengembalian()->exists()) {
-                    return redirect()->back()
-                        ->with('error', 'Buku sudah dikembalikan')
-                        ->withInput();
-                }
-
-                // Kurangi stok buku baru
-                $peminjamanBaru->buku->decrement('jumlah');
-            }
-
-            $pengembalian->update($request->all());
-
-            DB::commit();
-
-            return redirect()->route('admin.pengembalian.index')
-                ->with('success', 'Data pengembalian berhasil diperbarui');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error in PengembalianController@update: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data pengembalian')
-                ->withInput();
-        }
-    }
-
     public function destroy(Pengembalian $pengembalian)
     {
         $this->middleware('role:admin');
@@ -173,18 +110,18 @@ class PengembalianController extends Controller
             // Temukan peminjaman terkait
             $peminjaman = Peminjaman::find($pengembalian->peminjaman_id);
 
+            // Jika pengembalian dihapus, stok buku kembali berkurang
+            if ($peminjaman) {
+                $peminjaman->buku->decrement('jumlah');
+            }
+
             // Hapus pengembalian
             $pengembalian->delete();
-
-            // Hapus peminjaman jika ada
-            if ($peminjaman) {
-                $peminjaman->delete();
-            }
 
             DB::commit();
 
             return redirect()->back()
-                ->with('success', 'Data pengembalian dan peminjaman terkait berhasil dihapus');
+                ->with('success', 'Data pengembalian berhasil dihapus. Stok buku telah disesuaikan.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error in PengembalianController@destroy: ' . $e->getMessage());
@@ -251,16 +188,9 @@ class PengembalianController extends Controller
         }
     }
 
-    /**
-     * Export PDF untuk satu data pengembalian
-     */
-    public function exportSinglePdf($id)
+    public function show(Pengembalian $pengembalian)
     {
-        $this->middleware('role:admin');
-        $pengembalian = Pengembalian::with(['peminjaman.anggota.siswa', 'peminjaman.anggota.guru', 'peminjaman.buku.kategori'])->findOrFail($id);
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pengembalian.bukti', [
-            'pengembalian' => $pengembalian
-        ]);
-        return $pdf->download('bukti-pengembalian-'.$pengembalian->id.'.pdf');
+        $this->middleware('role:admin|petugas');
+        return response()->json($pengembalian->load(['peminjaman.anggota.siswa', 'peminjaman.anggota.guru', 'peminjaman.buku.kategori']));
     }
 }
