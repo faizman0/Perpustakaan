@@ -176,6 +176,7 @@
               <p>Dashboard</p>
             </a>
           </li>
+          
           @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('petugas'))
           <li class="nav-item has-treeview {{ in_array($key, ['kategori', 'buku']) ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ in_array($key, ['kategori', 'buku']) ? 'active' : '' }}">
@@ -284,7 +285,6 @@
               </li>
             </ul>
           </li>
-
           <li class="nav-item">
             <a href="{{ route('logout') }}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
               <i class="fas fa-sign-out-alt nav-icon"></i>
@@ -294,6 +294,8 @@
               @csrf
             </form>
           </li>
+
+          
           @endauth
         </ul>
       </nav>

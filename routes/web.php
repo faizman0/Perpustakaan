@@ -17,12 +17,13 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\AnggotaController;
 use App\Http\Controllers\LandingPageController;
 
-// Route yang bisa diakses tanpa login
-Route::get('/', [PageController::class, 'index'])->name('home');
-Route::get('/dashboard', [PageController::class, 'index'])->middleware('auth')->name('dashboard');
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+// Route landing page (menampilkan welcome jika belum login)
+Route::get('/', function() {
+    return view('welcome');
+})->name('home');
 
+// Route dashboard (hanya untuk user yang sudah login)
+Route::get('/dashboard', [PageController::class, 'index'])->middleware('auth')->name('dashboard');
 // Route yang memerlukan login
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
